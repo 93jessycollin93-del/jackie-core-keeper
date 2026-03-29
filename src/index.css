@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root,
+  .dark {
+    --background: 220 15% 5%;
+    --foreground: 220 10% 90%;
+
+    --card: 220 15% 7%;
+    --card-foreground: 220 10% 90%;
+
+    --popover: 220 15% 7%;
+    --popover-foreground: 220 10% 90%;
+
+    --primary: 150 100% 50%;
+    --primary-foreground: 220 15% 5%;
+
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 220 10% 80%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 35 100% 50%;
+    --accent-foreground: 220 15% 5%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 15% 15%;
+    --input: 220 15% 12%;
+    --ring: 150 100% 50%;
+
+    --radius: 2px;
+
+    --sidebar-background: 220 15% 7%;
+    --sidebar-foreground: 220 10% 70%;
+    --sidebar-primary: 150 100% 50%;
+    --sidebar-primary-foreground: 220 15% 5%;
+    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent-foreground: 220 10% 80%;
+    --sidebar-border: 220 15% 15%;
+    --sidebar-ring: 150 100% 50%;
+
+    --font-mono: "JetBrains Mono", "Geist Mono", monospace;
+    --font-sans: "IBM Plex Sans", sans-serif;
+
+    --shadow-none: none;
+  }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 220 15% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 10%;
+
+    --primary: 150 80% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 10% 92%;
+    --secondary-foreground: 220 15% 25%;
+
+    --muted: 220 10% 94%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 35 90% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 10% 85%;
+    --input: 220 10% 92%;
+    --ring: 150 80% 35%;
+
+    --radius: 2px;
+
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 220 10% 35%;
+    --sidebar-primary: 150 80% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 10% 92%;
+    --sidebar-accent-foreground: 220 15% 25%;
+    --sidebar-border: 220 10% 85%;
+    --sidebar-ring: 150 80% 35%;
+
+    --font-mono: "JetBrains Mono", "Geist Mono", monospace;
+    --font-sans: "IBM Plex Sans", sans-serif;
+
+    --shadow-none: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  code, pre {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum";
+  }
+}
+
+/* Jackie-specific utilities */
+@layer components {
+  .jackie-badge {
+    @apply inline-flex items-center px-2 py-0.5 text-xs border rounded-sm;
+    font-family: var(--font-mono);
+    background: hsl(var(--primary) / 0.1);
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  .jackie-security-flag {
+    @apply p-4 my-4 rounded-sm;
+    border-left: 4px solid hsl(var(--accent));
+    background: hsl(var(--accent) / 0.05);
+    color: hsl(var(--accent));
+  }
+
+  .jackie-input {
+    @apply w-full px-4 py-3 rounded-sm border;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: hsl(var(--input));
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+
+  .jackie-input:focus {
+    outline: none;
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  .memory-dot {
+    @apply inline-block w-1.5 h-1.5 rounded-full;
+    background: hsl(var(--muted-foreground));
+  }
+
+  .memory-dot.active {
+    background: hsl(var(--primary));
+  }
+
+  .stagger-enter > * {
+    animation: blockAppear 150ms cubic-bezier(0.19, 1, 0.22, 1) both;
+  }
+
+  .stagger-enter > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-enter > *:nth-child(2) { animation-delay: 20ms; }
+  .stagger-enter > *:nth-child(3) { animation-delay: 40ms; }
+  .stagger-enter > *:nth-child(4) { animation-delay: 60ms; }
+  .stagger-enter > *:nth-child(5) { animation-delay: 80ms; }
+
+  @keyframes blockAppear {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .btn-mechanical {
+    transition: transform 150ms cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .btn-mechanical:active {
+    transform: scale(0.98);
+  }
+}
