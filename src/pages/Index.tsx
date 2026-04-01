@@ -632,6 +632,32 @@ const Index = () => {
     const filesToUpload = [...pendingFiles];
     setInput("");
     setPendingFiles([]);
+
+    // Check for task commands first
+    if (userText && filesToUpload.length === 0) {
+      try {
+        const cmdResult = await processTaskCommand(userText);
+        if (cmdResult.handled) {
+          const userMsg: DisplayMessage = {
+            id: Date.now().toString(),
+            role: "user",
+            content: userText,
+            timestamp: new Date(),
+          };
+          const botMsg: DisplayMessage = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: cmdResult.response || "Done.",
+            timestamp: new Date(),
+            memoryTier: 1,
+          };
+          setMessages((prev) => [...prev, userMsg, botMsg]);
+          scrollToBottom();
+          return;
+        }
+      } catch { /* not a command, proceed normally */ }
+    }
+
     setIsProcessing(true);
 
     let convId = activeConvId;
