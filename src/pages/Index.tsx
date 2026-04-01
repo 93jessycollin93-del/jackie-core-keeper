@@ -333,11 +333,32 @@ const Sidebar = ({
           ))}
         </div>
 
+        {/* Desktop navigation links */}
+        <div className="p-2 border-t border-border space-y-0.5">
+          <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Navigation
+          </div>
+          {[
+            { path: "/tasks", icon: ListTodo, label: "nav.tasks" },
+            { path: "/tasks/board", icon: Columns3, label: "nav.board" },
+            { path: "/tasks/calendar", icon: CalendarDays, label: "nav.calendar" },
+          ].map((item) => (
+            <button
+              key={item.path}
+              onClick={() => window.location.href = item.path}
+              className="w-full flex items-center gap-2 px-2 py-1.5 font-mono text-xs text-sidebar-foreground hover:bg-secondary/50 rounded-sm transition-colors"
+            >
+              <item.icon size={12} className="text-muted-foreground" />
+              {item.label.split(".")[1].charAt(0).toUpperCase() + item.label.split(".")[1].slice(1)}
+            </button>
+          ))}
+        </div>
+
         <div className="p-4 border-t border-border space-y-2">
           <div className="font-mono text-[10px] text-muted-foreground truncate" title={userEmail}>
             {userEmail}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-between">
             <button
               onClick={onSignOut}
               className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-destructive transition-colors"
@@ -345,6 +366,7 @@ const Sidebar = ({
               <LogOut size={10} />
               Sign Out
             </button>
+            <LanguageSelector />
           </div>
         </div>
       </aside>
