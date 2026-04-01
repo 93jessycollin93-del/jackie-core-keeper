@@ -874,7 +874,7 @@ const Index = () => {
       />
 
       <main
-        className="flex-1 flex flex-col min-h-screen relative"
+        className="flex-1 flex flex-col min-h-screen relative pb-14 md:pb-0"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
