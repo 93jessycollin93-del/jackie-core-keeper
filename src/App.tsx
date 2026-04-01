@@ -1,3 +1,4 @@
+import "@/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -5,8 +6,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { BottomNav } from "@/components/BottomNav";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Tasks from "./pages/Tasks";
+import TaskBoard from "./pages/TaskBoard";
+import TaskCalendar from "./pages/TaskCalendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +31,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const AppLayout = ({ children }: { children: React.ReactNode }) => (
+  <>
+    {children}
+    <BottomNav />
+  </>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -40,7 +52,31 @@ const App = () => (
                 path="/"
                 element={
                   <ProtectedRoute>
-                    <Index />
+                    <AppLayout><Index /></AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tasks"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout><Tasks /></AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tasks/board"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout><TaskBoard /></AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tasks/calendar"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout><TaskCalendar /></AppLayout>
                   </ProtectedRoute>
                 }
               />
