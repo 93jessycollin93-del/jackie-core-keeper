@@ -26,7 +26,11 @@ import { ChatMediaBar, type PendingFile } from "@/components/ChatMediaBar";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { AttachmentDisplay } from "@/components/AttachmentDisplay";
 import { toast } from "sonner";
-import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle } from "lucide-react";
+import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle, ListTodo, Columns3, CalendarDays } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { processTaskCommand } from "@/lib/task-commands";
 import {
   listTags,
   createTag,
@@ -329,11 +333,32 @@ const Sidebar = ({
           ))}
         </div>
 
+        {/* Desktop navigation links */}
+        <div className="p-2 border-t border-border space-y-0.5">
+          <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Navigation
+          </div>
+          {[
+            { path: "/tasks", icon: ListTodo, label: "nav.tasks" },
+            { path: "/tasks/board", icon: Columns3, label: "nav.board" },
+            { path: "/tasks/calendar", icon: CalendarDays, label: "nav.calendar" },
+          ].map((item) => (
+            <button
+              key={item.path}
+              onClick={() => window.location.href = item.path}
+              className="w-full flex items-center gap-2 px-2 py-1.5 font-mono text-xs text-sidebar-foreground hover:bg-secondary/50 rounded-sm transition-colors"
+            >
+              <item.icon size={12} className="text-muted-foreground" />
+              {item.label.split(".")[1].charAt(0).toUpperCase() + item.label.split(".")[1].slice(1)}
+            </button>
+          ))}
+        </div>
+
         <div className="p-4 border-t border-border space-y-2">
           <div className="font-mono text-[10px] text-muted-foreground truncate" title={userEmail}>
             {userEmail}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-between">
             <button
               onClick={onSignOut}
               className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-destructive transition-colors"
@@ -341,6 +366,7 @@ const Sidebar = ({
               <LogOut size={10} />
               Sign Out
             </button>
+            <LanguageSelector />
           </div>
         </div>
       </aside>
@@ -606,6 +632,32 @@ const Index = () => {
     const filesToUpload = [...pendingFiles];
     setInput("");
     setPendingFiles([]);
+
+    // Check for task commands first
+    if (userText && filesToUpload.length === 0) {
+      try {
+        const cmdResult = await processTaskCommand(userText);
+        if (cmdResult.handled) {
+          const userMsg: DisplayMessage = {
+            id: Date.now().toString(),
+            role: "user",
+            content: userText,
+            timestamp: new Date(),
+          };
+          const botMsg: DisplayMessage = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: cmdResult.response || "Done.",
+            timestamp: new Date(),
+            memoryTier: 1,
+          };
+          setMessages((prev) => [...prev, userMsg, botMsg]);
+          scrollToBottom();
+          return;
+        }
+      } catch { /* not a command, proceed normally */ }
+    }
+
     setIsProcessing(true);
 
     let convId = activeConvId;
@@ -822,7 +874,7 @@ const Index = () => {
       />
 
       <main
-        className="flex-1 flex flex-col min-h-screen relative"
+        className="flex-1 flex flex-col min-h-screen relative pb-14 md:pb-0"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
