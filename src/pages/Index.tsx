@@ -743,6 +743,42 @@ const Index = () => {
       { id: assistantTempId, role: "assistant", content: "", timestamp: new Date(), memoryTier: 1 },
     ]);
 
+    // ─── Coder Agent (Hydra) branch ─────────────────────────
+    if (coderMode) {
+      try {
+        const hydra = await callHydraCoder(userText);
+        assistantContent = hydra.final_answer;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantTempId
+              ? { ...m, content: assistantContent, hydra, memoryTier: 2 }
+              : m
+          )
+        );
+        setChatHistory((prev) => [...prev, { role: "assistant", content: assistantContent }]);
+        try {
+          await saveMessage({
+            conversation_id: convId!,
+            role: "assistant",
+            content: assistantContent,
+            memory_tier: 2,
+          });
+          if (newHistory.length === 1) {
+            await updateConversationTitle(convId!, generateTitle(userText));
+            await loadConversations();
+          }
+        } catch { /* best effort */ }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : t("hydra.failed", "Hydra Coder failed"));
+        setMessages((prev) => prev.filter((m) => m.id !== assistantTempId));
+      } finally {
+        setIsProcessing(false);
+        scrollToBottom();
+      }
+      return;
+    }
+
+    // ─── Normal Jackie chat stream ──────────────────────────
     await streamChat({
       messages: newHistory,
       model: selectedModel,
