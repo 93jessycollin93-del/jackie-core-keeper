@@ -369,7 +369,7 @@ const Sidebar = ({
               className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-destructive transition-colors"
             >
               <LogOut size={10} />
-              Sign Out
+              {t("app.signOut")}
             </button>
             <LanguageSelector />
           </div>
