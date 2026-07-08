@@ -1059,7 +1059,7 @@ const Index = () => {
                   onClick={() => setModelMenuOpen((prev) => !prev)}
                   className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {JACKIE_MODELS.find((m) => m.id === selectedModel)?.label ?? "Model"}
+                  {JACKIE_MODELS.find((m) => m.id === selectedModel)?.label ?? t("app.model")}
                   <ChevronDown size={10} />
                 </button>
                 {modelMenuOpen && (
