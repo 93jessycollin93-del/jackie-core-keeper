@@ -233,7 +233,7 @@ const Sidebar = ({
                   <button
                     onClick={(e) => { e.stopPropagation(); setTagMenuConvId(tagMenuConvId === conv.id ? null : conv.id); }}
                     className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-opacity duration-150"
-                    title="Manage tags"
+                    title={t("app.manageTags")}
                   >
                     <Tag size={10} />
                   </button>
