@@ -381,13 +381,16 @@ const Sidebar = ({
 
 // ─── Memory Dots ───────────────────────────────────────────
 
-const MemoryDots = ({ tier }: { tier: 1 | 2 | 3 }) => (
-  <div className="flex gap-1 items-center" title={`Memory tier: ${["Ephemeral", "Durable", "Gold"][tier - 1]}`}>
-    {[1, 2, 3].map((i) => (
-      <span key={i} className={`memory-dot ${i <= tier ? "active" : ""}`} />
-    ))}
-  </div>
-);
+const MemoryDots = ({ tier }: { tier: 1 | 2 | 3 }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex gap-1 items-center" title={`${t("memory.tier", "Memory tier")}: ${[t("memory.ephemeral", "Ephemeral"), t("memory.durable", "Durable"), t("memory.gold", "Gold")][tier - 1]}`}>
+      {[1, 2, 3].map((i) => (
+        <span key={i} className={`memory-dot ${i <= tier ? "active" : ""}`} />
+      ))}
+    </div>
+  );
+};
 
 // ─── Messages ──────────────────────────────────────────────
 
