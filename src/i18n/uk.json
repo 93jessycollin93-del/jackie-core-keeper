@@ -14,21 +14,56 @@
     "signOut": "Вийти",
     "newConversation": "Нова розмова",
     "exportChat": "Експорт чату",
-    "send": "Надіслати",
+    "send": "Надіслати (Enter)",
     "manageTags": "Керувати тегами",
     "noTagsYet": "Тегів ще немає",
     "newTag": "+ Новий тег",
     "tagName": "Назва тегу",
     "create": "Створити",
     "cancel": "Скасувати",
+    "save": "Зберегти",
     "switchTheme": "Змінити тему",
-    "language": "Мова"
+    "language": "Мова",
+    "stopSpeaking": "Зупинити мовлення",
+    "readAloud": "Прочитати вголос"
   },
   "nav": {
     "chat": "Чат",
     "tasks": "Завдання",
     "board": "Дошка",
-    "calendar": "Календар"
+    "calendar": "Календар",
+    "navigation": "Навігація"
+  },
+  "memory": {
+    "tier": "Рівень пам'яті",
+    "ephemeral": "Тимчасова",
+    "durable": "Стійка",
+    "gold": "Золота"
+  },
+  "hydra": {
+    "badge": "Hydra Coder—",
+    "coder": "Кодер",
+    "toggleHint": "Увімкнути Coder Agent (кілька моделей паралельно)",
+    "failed": "Hydra Coder не вдалося запустити",
+    "meta": "{{ok}}/{{count}} моделей · переможець: {{winner}} · {{ms}}мс",
+    "judgeSays": "Суддя",
+    "judgeLatency": "суддя",
+    "totalLatency": "всього",
+    "settings": {
+      "title": "Налаштування Hydra",
+      "url": "URL Ollama",
+      "model": "Модель Ollama",
+      "mode": "Режим маршрутизації",
+      "modeOllamaFirst": "Ollama спочатку, хмара як резерв",
+      "modeParallel": "Ollama + хмара паралельно",
+      "modeCloudOnly": "Тільки хмара",
+      "test": "Тест",
+      "testing": "Тестування…",
+      "connected": "Підключено",
+      "failed": "Не вдалося",
+      "urlRequired": "Потрібен URL",
+      "hint": "URL Ollama зберігається локально у вашому браузері. Для віддаленого доступу використовуйте ngrok, Cloudflare Tunnel або публічну IP GCP. Залиште порожнім, щоб використовувати лише хмарні провайдери."
+    }
   },
   "tasks": {
     "title": "Завдання",

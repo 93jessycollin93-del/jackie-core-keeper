@@ -14,21 +14,56 @@
     "signOut": "退出登录",
     "newConversation": "新对话",
     "exportChat": "导出聊天",
-    "send": "发送",
+    "send": "发送 (Enter)",
     "manageTags": "管理标签",
     "noTagsYet": "还没有标签",
     "newTag": "+ 新标签",
     "tagName": "标签名称",
     "create": "创建",
     "cancel": "取消",
+    "save": "保存",
     "switchTheme": "切换主题",
-    "language": "语言"
+    "language": "语言",
+    "stopSpeaking": "停止朗读",
+    "readAloud": "朗读"
   },
   "nav": {
     "chat": "聊天",
     "tasks": "任务",
     "board": "看板",
-    "calendar": "日历"
+    "calendar": "日历",
+    "navigation": "导航"
+  },
+  "memory": {
+    "tier": "记忆层级",
+    "ephemeral": "短暂",
+    "durable": "持久",
+    "gold": "黄金"
+  },
+  "hydra": {
+    "badge": "Hydra Coder—",
+    "coder": "编码器",
+    "toggleHint": "切换编码器代理（多模型并行）",
+    "failed": "Hydra Coder 失败",
+    "meta": "{{ok}}/{{count}} 个模型 · 胜者: {{winner}} · {{ms}}毫秒",
+    "judgeSays": "评判",
+    "judgeLatency": "评判",
+    "totalLatency": "总计",
+    "settings": {
+      "title": "Hydra 设置",
+      "url": "Ollama 地址",
+      "model": "Ollama 模型",
+      "mode": "路由模式",
+      "modeOllamaFirst": "Ollama 优先,云端回退",
+      "modeParallel": "Ollama + 云端并行",
+      "modeCloudOnly": "仅云端",
+      "test": "测试",
+      "testing": "测试中…",
+      "connected": "已连接",
+      "failed": "失败",
+      "urlRequired": "需要地址",
+      "hint": "Ollama 地址存储在您的浏览器本地。远程访问请使用 ngrok、Cloudflare Tunnel 或公网 GCP IP。留空则仅使用云端提供商。"
+    }
   },
   "tasks": {
     "title": "任务",

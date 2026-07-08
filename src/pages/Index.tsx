@@ -26,11 +26,14 @@ import { ChatMediaBar, type PendingFile } from "@/components/ChatMediaBar";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { AttachmentDisplay } from "@/components/AttachmentDisplay";
 import { toast } from "sonner";
-import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle, ListTodo, Columns3, CalendarDays } from "lucide-react";
+import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle, ListTodo, Columns3, CalendarDays, Cpu, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { processTaskCommand } from "@/lib/task-commands";
+import { callHydraCoder, type HydraResponse } from "@/lib/hydra-client";
+import { HydraMeta } from "@/components/HydraMeta";
+import { HydraSettings } from "@/components/HydraSettings";
 import {
   listTags,
   createTag,
@@ -51,6 +54,7 @@ interface DisplayMessage {
   memoryTier?: 1 | 2 | 3;
   securityFlag?: string | null;
   attachments?: Attachment[];
+  hydra?: HydraResponse;
 }
 
 // ─── Sidebar ───────────────────────────────────────────────
@@ -96,6 +100,7 @@ const Sidebar = ({
   onDeleteTag: (id: string) => void;
   onToggleTag: (convId: string, tagId: string, has: boolean) => void;
 }) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewTag, setShowNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
@@ -146,14 +151,14 @@ const Sidebar = ({
               <button
                 onClick={onNew}
                 className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors duration-150"
-                title="New conversation"
+                title={t("app.newConversation")}
               >
                 <Plus size={14} />
               </button>
               <button
                 onClick={onToggleTheme}
                 className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors duration-150"
-                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                title={t("app.switchTheme")}
               >
                 {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
               </button>
@@ -174,7 +179,7 @@ const Sidebar = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search conversations…"
+              placeholder={t("app.searchConversations")}
               className="w-full pl-7 pr-2 py-1.5 rounded-sm bg-secondary/50 border border-border font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
           </div>
@@ -199,11 +204,11 @@ const Sidebar = ({
 
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground flex items-center justify-between">
-            <span>Conversations {(searchQuery || activeTagFilter) && `(${filtered.length})`}</span>
+            <span>{t("app.conversations")} {(searchQuery || activeTagFilter) && `(${filtered.length})`}</span>
           </div>
           {filtered.length === 0 && (
             <div className="px-2 py-2 text-xs text-muted-foreground">
-              {searchQuery || activeTagFilter ? "No matches found." : "No conversations yet."}
+              {searchQuery || activeTagFilter ? t("app.noMatches") : t("app.noConversations")}
             </div>
           )}
           {filtered.map((conv) => {
@@ -228,7 +233,7 @@ const Sidebar = ({
                   <button
                     onClick={(e) => { e.stopPropagation(); setTagMenuConvId(tagMenuConvId === conv.id ? null : conv.id); }}
                     className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-opacity duration-150"
-                    title="Manage tags"
+                    title={t("app.manageTags")}
                   >
                     <Tag size={10} />
                   </button>
@@ -265,12 +270,12 @@ const Sidebar = ({
                         </button>
                       );
                     })}
-                    {tags.length === 0 && <div className="text-[10px] text-muted-foreground">No tags yet</div>}
+                    {tags.length === 0 && <div className="text-[10px] text-muted-foreground">{t("app.noTagsYet")}</div>}
                     <button
                       onClick={() => setShowNewTag(true)}
                       className="w-full text-left px-2 py-1 font-mono text-[10px] text-primary hover:bg-secondary rounded-sm"
                     >
-                      + New tag
+                      {t("app.newTag")}
                     </button>
                   </div>
                 )}
@@ -285,7 +290,7 @@ const Sidebar = ({
                 type="text"
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
-                placeholder="Tag name"
+                placeholder={t("app.tagName")}
                 className="w-full px-2 py-1 bg-secondary/50 border border-border rounded-sm font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                 autoFocus
               />
@@ -309,13 +314,13 @@ const Sidebar = ({
                   }}
                   className="px-2 py-1 bg-primary text-primary-foreground font-mono text-[10px] rounded-sm hover:opacity-90"
                 >
-                  Create
+                  {t("app.create")}
                 </button>
                 <button
                   onClick={() => { setShowNewTag(false); setNewTagName(""); }}
                   className="px-2 py-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"
                 >
-                  Cancel
+                  {t("app.cancel")}
                 </button>
               </div>
             </div>
@@ -324,7 +329,7 @@ const Sidebar = ({
 
         <div className="p-2 border-t border-border space-y-0.5">
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Core
+            {t("app.core")}
           </div>
           {coreFiles.map((file) => (
             <div key={file} className="px-2 py-1 font-mono text-[11px] text-muted-foreground truncate">
@@ -336,7 +341,7 @@ const Sidebar = ({
         {/* Desktop navigation links */}
         <div className="p-2 border-t border-border space-y-0.5">
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Navigation
+            {t("nav.navigation", "Navigation")}
           </div>
           {[
             { path: "/tasks", icon: ListTodo, label: "nav.tasks" },
@@ -349,7 +354,7 @@ const Sidebar = ({
               className="w-full flex items-center gap-2 px-2 py-1.5 font-mono text-xs text-sidebar-foreground hover:bg-secondary/50 rounded-sm transition-colors"
             >
               <item.icon size={12} className="text-muted-foreground" />
-              {item.label.split(".")[1].charAt(0).toUpperCase() + item.label.split(".")[1].slice(1)}
+              {t(item.label)}
             </button>
           ))}
         </div>
@@ -364,7 +369,7 @@ const Sidebar = ({
               className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-destructive transition-colors"
             >
               <LogOut size={10} />
-              Sign Out
+              {t("app.signOut")}
             </button>
             <LanguageSelector />
           </div>
@@ -376,17 +381,21 @@ const Sidebar = ({
 
 // ─── Memory Dots ───────────────────────────────────────────
 
-const MemoryDots = ({ tier }: { tier: 1 | 2 | 3 }) => (
-  <div className="flex gap-1 items-center" title={`Memory tier: ${["Ephemeral", "Durable", "Gold"][tier - 1]}`}>
-    {[1, 2, 3].map((i) => (
-      <span key={i} className={`memory-dot ${i <= tier ? "active" : ""}`} />
-    ))}
-  </div>
-);
+const MemoryDots = ({ tier }: { tier: 1 | 2 | 3 }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex gap-1 items-center" title={`${t("memory.tier", "Memory tier")}: ${[t("memory.ephemeral", "Ephemeral"), t("memory.durable", "Durable"), t("memory.gold", "Gold")][tier - 1]}`}>
+      {[1, 2, 3].map((i) => (
+        <span key={i} className={`memory-dot ${i <= tier ? "active" : ""}`} />
+      ))}
+    </div>
+  );
+};
 
 // ─── Messages ──────────────────────────────────────────────
 
 const JackieMessage = ({ message }: { message: DisplayMessage }) => {
+  const { t } = useTranslation();
   const [speaking, setSpeaking] = useState(false);
 
   const toggleSpeak = async () => {
@@ -407,13 +416,15 @@ const JackieMessage = ({ message }: { message: DisplayMessage }) => {
   return (
     <div className="space-y-3 stagger-enter">
       <div className="flex items-center justify-between">
-        <span className="jackie-badge">Jackie here—</span>
+        <span className="jackie-badge">
+          {message.hydra ? t("hydra.badge", "Hydra Coder—") : "Jackie here—"}
+        </span>
         <div className="flex items-center gap-2">
           {voiceManager.isSupported() && (
             <button
               onClick={toggleSpeak}
               className="p-1 rounded-sm text-muted-foreground hover:text-primary transition-colors"
-              title={speaking ? "Stop speaking" : "Read aloud"}
+              title={speaking ? t("app.stopSpeaking", "Stop speaking") : t("app.readAloud", "Read aloud")}
             >
               {speaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
             </button>
@@ -430,9 +441,20 @@ const JackieMessage = ({ message }: { message: DisplayMessage }) => {
         </div>
       )}
 
-      <div className="text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+      <div className="text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert hydra-wrap">
         <ReactMarkdown>{message.content}</ReactMarkdown>
       </div>
+
+      {message.hydra && (
+        <HydraMeta
+          winner={message.hydra.winner}
+          candidates={message.hydra.candidates}
+          total_latency_ms={message.hydra.total_latency_ms}
+          judge_latency_ms={message.hydra.judge_latency_ms}
+          source={message.hydra.source}
+          reasoning={message.hydra.reasoning}
+        />
+      )}
 
       {message.attachments && message.attachments.length > 0 && (
         <AttachmentDisplay attachments={message.attachments} />
@@ -471,6 +493,7 @@ const CORE_FILES = [
 ];
 
 const Index = () => {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -485,6 +508,8 @@ const Index = () => {
   const [tags, setTags] = useState<TagType[]>([]);
   const [tagMap, setTagMap] = useState<Record<string, string[]>>({});
   const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
+  const [coderMode, setCoderMode] = useState(false);
+  const [hydraSettingsOpen, setHydraSettingsOpen] = useState(false);
 
   const changeModel = useCallback(async (model: JackieModelId) => {
     setSelectedModel(model);
@@ -718,6 +743,42 @@ const Index = () => {
       { id: assistantTempId, role: "assistant", content: "", timestamp: new Date(), memoryTier: 1 },
     ]);
 
+    // ─── Coder Agent (Hydra) branch ─────────────────────────
+    if (coderMode) {
+      try {
+        const hydra = await callHydraCoder(userText);
+        assistantContent = hydra.final_answer;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantTempId
+              ? { ...m, content: assistantContent, hydra, memoryTier: 2 }
+              : m
+          )
+        );
+        setChatHistory((prev) => [...prev, { role: "assistant", content: assistantContent }]);
+        try {
+          await saveMessage({
+            conversation_id: convId!,
+            role: "assistant",
+            content: assistantContent,
+            memory_tier: 2,
+          });
+          if (newHistory.length === 1) {
+            await updateConversationTitle(convId!, generateTitle(userText));
+            await loadConversations();
+          }
+        } catch { /* best effort */ }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : t("hydra.failed", "Hydra Coder failed"));
+        setMessages((prev) => prev.filter((m) => m.id !== assistantTempId));
+      } finally {
+        setIsProcessing(false);
+        scrollToBottom();
+      }
+      return;
+    }
+
+    // ─── Normal Jackie chat stream ──────────────────────────
     await streamChat({
       messages: newHistory,
       model: selectedModel,
@@ -885,7 +946,7 @@ const Index = () => {
             <div className="flex flex-col items-center gap-2">
               <Download size={32} className="text-primary" />
               <span className="font-mono text-xs uppercase tracking-widest text-primary">
-                Drop files here
+                {t("app.dropFiles")}
               </span>
             </div>
           </div>
@@ -904,7 +965,7 @@ const Index = () => {
             <button
               onClick={exportChat}
               className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors"
-              title="Export chat"
+              title={t("app.exportChat")}
             >
               <Download size={16} />
             </button>
@@ -912,7 +973,7 @@ const Index = () => {
           <button
             onClick={toggleTheme}
             className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors"
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={t("app.switchTheme")}
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -930,10 +991,10 @@ const Index = () => {
               <div className="flex flex-col items-start justify-center min-h-[60vh] space-y-4">
                 <span className="font-mono text-4xl font-bold text-primary">J</span>
                 <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                  System_Status: Grounded. Memory: Active.
+                  {t("app.tagline")}
                 </div>
                 <p className="text-muted-foreground text-sm max-w-md">
-                  Jackie is ready. Type a command, ask a question, paste some code, or start building.
+                  {t("app.ready")}
                 </p>
               </div>
             )}
@@ -984,10 +1045,12 @@ const Index = () => {
               <button
                 onClick={handleSubmit}
                 disabled={isProcessing || (!input.trim() && pendingFiles.length === 0)}
-                className="p-3 rounded-sm bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-30 transition-opacity btn-mechanical flex-shrink-0"
-                title="Send (Enter)"
+                className={`p-3 rounded-sm text-primary-foreground hover:opacity-90 disabled:opacity-30 transition-opacity btn-mechanical flex-shrink-0 ${
+                  coderMode ? "bg-gradient-to-br from-primary to-purple-500" : "bg-primary"
+                }`}
+                title={t("app.send")}
               >
-                <Send size={16} />
+                {coderMode ? <Cpu size={16} /> : <Send size={16} />}
               </button>
             </div>
             <div className="flex items-center justify-between mt-1.5 ml-5">
@@ -996,7 +1059,7 @@ const Index = () => {
                   onClick={() => setModelMenuOpen((prev) => !prev)}
                   className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {JACKIE_MODELS.find((m) => m.id === selectedModel)?.label ?? "Model"}
+                  {JACKIE_MODELS.find((m) => m.id === selectedModel)?.label ?? t("app.model")}
                   <ChevronDown size={10} />
                 </button>
                 {modelMenuOpen && (
@@ -1041,13 +1104,34 @@ const Index = () => {
                   </>
                 )}
               </div>
-              <span className="font-mono text-[10px] text-muted-foreground">
-                Enter to send · Shift+Enter for new line
-              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCoderMode((p) => !p)}
+                  className={`flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
+                    coderMode ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title={t("hydra.toggleHint", "Toggle Coder Agent (8-model fan-out)")}
+                >
+                  <Cpu size={10} className={coderMode ? "text-primary" : ""} />
+                  {t("hydra.coder", "Coder")}
+                </button>
+                <button
+                  onClick={() => setHydraSettingsOpen(true)}
+                  className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  title={t("hydra.settings.title", "Hydra Settings")}
+                >
+                  <Settings size={10} />
+                </button>
+                <span className="font-mono text-[10px] text-muted-foreground hidden sm:inline">
+                  {t("app.enterToSend")}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
+      <HydraSettings open={hydraSettingsOpen} onClose={() => setHydraSettingsOpen(false)} />
 
       <style>{`
         @keyframes progressSlide {
@@ -1055,13 +1139,16 @@ const Index = () => {
           50% { width: 60%; margin-left: 20%; }
           100% { width: 0%; margin-left: 100%; }
         }
-        .prose pre { background: hsl(var(--secondary)); border: 1px solid hsl(var(--border)); border-radius: 2px; }
-        .prose code { font-family: var(--font-mono); font-size: 13px; }
+        .prose pre { background: hsl(var(--secondary)); border: 1px solid hsl(var(--border)); border-radius: 2px; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; overflow-x: hidden; }
+        .prose pre code { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+        .prose code { font-family: var(--font-mono); font-size: 13px; word-break: break-word; overflow-wrap: anywhere; }
         .prose p code { background: hsl(var(--secondary)); padding: 2px 6px; border-radius: 2px; }
-        .prose a { color: hsl(var(--primary)); }
+        .prose a { color: hsl(var(--primary)); word-break: break-all; }
         .prose strong { color: hsl(var(--foreground)); }
         .prose h1, .prose h2, .prose h3 { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; color: hsl(var(--foreground)); }
         .prose ul, .prose ol { color: hsl(var(--foreground) / 0.8); }
+        .prose p, .prose li { word-break: break-word; overflow-wrap: anywhere; }
+        .hydra-wrap { max-width: 100%; overflow-wrap: anywhere; }
       `}</style>
     </div>
   );

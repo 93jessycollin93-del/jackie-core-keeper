@@ -14,21 +14,56 @@
     "signOut": "Sign Out",
     "newConversation": "New conversation",
     "exportChat": "Export chat",
-    "send": "Send",
+    "send": "Send (Enter)",
     "manageTags": "Manage tags",
     "noTagsYet": "No tags yet",
     "newTag": "+ New tag",
     "tagName": "Tag name",
     "create": "Create",
     "cancel": "Cancel",
+    "save": "Save",
     "switchTheme": "Switch theme",
-    "language": "Language"
+    "language": "Language",
+    "stopSpeaking": "Stop speaking",
+    "readAloud": "Read aloud"
   },
   "nav": {
     "chat": "Chat",
     "tasks": "Tasks",
     "board": "Board",
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "navigation": "Navigation"
+  },
+  "memory": {
+    "tier": "Memory tier",
+    "ephemeral": "Ephemeral",
+    "durable": "Durable",
+    "gold": "Gold"
+  },
+  "hydra": {
+    "badge": "Hydra Coder—",
+    "coder": "Coder",
+    "toggleHint": "Toggle Coder Agent (multi-model fan-out)",
+    "failed": "Hydra Coder failed",
+    "meta": "{{ok}}/{{count}} models · winner: {{winner}} · {{ms}}ms",
+    "judgeSays": "Judge",
+    "judgeLatency": "judge",
+    "totalLatency": "total",
+    "settings": {
+      "title": "Hydra Settings",
+      "url": "Ollama URL",
+      "model": "Ollama model",
+      "mode": "Routing mode",
+      "modeOllamaFirst": "Ollama first, cloud fallback",
+      "modeParallel": "Ollama + cloud in parallel",
+      "modeCloudOnly": "Cloud only",
+      "test": "Test",
+      "testing": "Testing…",
+      "connected": "Connected",
+      "failed": "Failed",
+      "urlRequired": "URL required",
+      "hint": "Ollama URL is stored locally in your browser. For remote access, use ngrok, Cloudflare Tunnel, or a public GCP IP. Leave empty to use cloud providers only."
+    }
   },
   "tasks": {
     "title": "Tasks",
