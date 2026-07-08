@@ -1104,13 +1104,34 @@ const Index = () => {
                   </>
                 )}
               </div>
-              <span className="font-mono text-[10px] text-muted-foreground">
-                Enter to send · Shift+Enter for new line
-              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCoderMode((p) => !p)}
+                  className={`flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
+                    coderMode ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title={t("hydra.toggleHint", "Toggle Coder Agent (8-model fan-out)")}
+                >
+                  <Cpu size={10} className={coderMode ? "text-primary" : ""} />
+                  {t("hydra.coder", "Coder")}
+                </button>
+                <button
+                  onClick={() => setHydraSettingsOpen(true)}
+                  className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  title={t("hydra.settings.title", "Hydra Settings")}
+                >
+                  <Settings size={10} />
+                </button>
+                <span className="font-mono text-[10px] text-muted-foreground hidden sm:inline">
+                  {t("app.enterToSend")}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
+      <HydraSettings open={hydraSettingsOpen} onClose={() => setHydraSettingsOpen(false)} />
 
       <style>{`
         @keyframes progressSlide {
