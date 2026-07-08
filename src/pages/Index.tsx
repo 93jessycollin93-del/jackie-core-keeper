@@ -270,12 +270,12 @@ const Sidebar = ({
                         </button>
                       );
                     })}
-                    {tags.length === 0 && <div className="text-[10px] text-muted-foreground">No tags yet</div>}
+                    {tags.length === 0 && <div className="text-[10px] text-muted-foreground">{t("app.noTagsYet")}</div>}
                     <button
                       onClick={() => setShowNewTag(true)}
                       className="w-full text-left px-2 py-1 font-mono text-[10px] text-primary hover:bg-secondary rounded-sm"
                     >
-                      + New tag
+                      {t("app.newTag")}
                     </button>
                   </div>
                 )}
