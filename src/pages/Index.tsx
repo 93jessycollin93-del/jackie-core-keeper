@@ -991,10 +991,10 @@ const Index = () => {
               <div className="flex flex-col items-start justify-center min-h-[60vh] space-y-4">
                 <span className="font-mono text-4xl font-bold text-primary">J</span>
                 <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                  System_Status: Grounded. Memory: Active.
+                  {t("app.tagline")}
                 </div>
                 <p className="text-muted-foreground text-sm max-w-md">
-                  Jackie is ready. Type a command, ask a question, paste some code, or start building.
+                  {t("app.ready")}
                 </p>
               </div>
             )}
