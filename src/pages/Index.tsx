@@ -25,6 +25,7 @@ import { voiceManager } from "@/lib/voice-manager";
 import { ChatMediaBar, type PendingFile } from "@/components/ChatMediaBar";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { AttachmentDisplay } from "@/components/AttachmentDisplay";
+import { OllamaSettings } from "@/components/OllamaSettings";
 import { toast } from "sonner";
 import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle, ListTodo, Columns3, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -493,6 +494,7 @@ const Index = () => {
     }
   }, [activeConvId]);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
+  const [ollamaSettingsOpen, setOllamaSettingsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
   const feedRef = useRef<HTMLDivElement>(null);
@@ -991,55 +993,64 @@ const Index = () => {
               </button>
             </div>
             <div className="flex items-center justify-between mt-1.5 ml-5">
-              <div className="relative">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <button
+                    onClick={() => setModelMenuOpen((prev) => !prev)}
+                    className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {JACKIE_MODELS.find((m) => m.id === selectedModel)?.label ?? "Model"}
+                    <ChevronDown size={10} />
+                  </button>
+                  {modelMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setModelMenuOpen(false)} />
+                      <div className="absolute bottom-full left-0 mb-1 z-50 bg-popover border border-border rounded-sm shadow-lg py-1 min-w-[260px]">
+                        {JACKIE_MODELS.map((m) => {
+                          const costLabel = ["$", "$$", "$$$"][m.cost - 1];
+                          const speedDots = Array.from({ length: 3 }, (_, i) => i < m.speed);
+                          return (
+                            <button
+                              key={m.id}
+                              onClick={() => {
+                                changeModel(m.id);
+                                setModelMenuOpen(false);
+                              }}
+                              className={`w-full text-left px-3 py-2 font-mono text-xs hover:bg-secondary transition-colors flex items-center gap-3 ${
+                                selectedModel === m.id ? "text-primary bg-secondary/50" : "text-popover-foreground"
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold">{m.label}</span>
+                                  {selectedModel === m.id && <span className="text-[9px] text-primary">●</span>}
+                                </div>
+                                <span className="text-[10px] text-muted-foreground">{m.description}</span>
+                              </div>
+                              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                                <span className={`text-[10px] font-semibold ${m.cost === 1 ? "text-green-500" : m.cost === 2 ? "text-yellow-500" : "text-orange-500"}`}>
+                                  {costLabel}
+                                </span>
+                                <div className="flex gap-0.5" title={`Speed: ${m.speed}/3`}>
+                                  {speedDots.map((active, i) => (
+                                    <Zap key={i} size={8} className={active ? "text-primary fill-primary" : "text-muted-foreground/30"} />
+                                  ))}
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
                 <button
-                  onClick={() => setModelMenuOpen((prev) => !prev)}
-                  className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setOllamaSettingsOpen(true)}
+                  className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                  title="Ollama Settings"
                 >
-                  {JACKIE_MODELS.find((m) => m.id === selectedModel)?.label ?? "Model"}
-                  <ChevronDown size={10} />
+                  <Zap size={14} />
                 </button>
-                {modelMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setModelMenuOpen(false)} />
-                    <div className="absolute bottom-full left-0 mb-1 z-50 bg-popover border border-border rounded-sm shadow-lg py-1 min-w-[260px]">
-                      {JACKIE_MODELS.map((m) => {
-                        const costLabel = ["$", "$$", "$$$"][m.cost - 1];
-                        const speedDots = Array.from({ length: 3 }, (_, i) => i < m.speed);
-                        return (
-                          <button
-                            key={m.id}
-                            onClick={() => {
-                              changeModel(m.id);
-                              setModelMenuOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 font-mono text-xs hover:bg-secondary transition-colors flex items-center gap-3 ${
-                              selectedModel === m.id ? "text-primary bg-secondary/50" : "text-popover-foreground"
-                            }`}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold">{m.label}</span>
-                                {selectedModel === m.id && <span className="text-[9px] text-primary">●</span>}
-                              </div>
-                              <span className="text-[10px] text-muted-foreground">{m.description}</span>
-                            </div>
-                            <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                              <span className={`text-[10px] font-semibold ${m.cost === 1 ? "text-green-500" : m.cost === 2 ? "text-yellow-500" : "text-orange-500"}`}>
-                                {costLabel}
-                              </span>
-                              <div className="flex gap-0.5" title={`Speed: ${m.speed}/3`}>
-                                {speedDots.map((active, i) => (
-                                  <Zap key={i} size={8} className={active ? "text-primary fill-primary" : "text-muted-foreground/30"} />
-                                ))}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
               </div>
               <span className="font-mono text-[10px] text-muted-foreground">
                 Enter to send · Shift+Enter for new line
@@ -1048,6 +1059,11 @@ const Index = () => {
           </div>
         </div>
       </main>
+
+      <OllamaSettings
+        isOpen={ollamaSettingsOpen}
+        onClose={() => setOllamaSettingsOpen(false)}
+      />
 
       <style>{`
         @keyframes progressSlide {

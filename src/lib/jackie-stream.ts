@@ -1,3 +1,5 @@
+import { streamOllamaChat, getOllamaConfig } from "./ollama-client";
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/jackie-chat`;
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -9,6 +11,7 @@ export const JACKIE_MODELS = [
   { id: "google/gemini-3-flash-preview", label: "Gemini 3 Flash", description: "Next-gen balanced", cost: 2, speed: 2 },
   { id: "openai/gpt-5", label: "GPT-5", description: "Powerful all-rounder", cost: 3, speed: 1 },
   { id: "openai/gpt-5-mini", label: "GPT-5 Mini", description: "Strong & efficient", cost: 2, speed: 2 },
+  { id: "ollama/local", label: "Local Ollama", description: "Free local inference", cost: 0, speed: 2 },
 ] as const;
 
 export type JackieModelId = (typeof JACKIE_MODELS)[number]["id"];
@@ -26,6 +29,18 @@ export async function streamChat({
   onDone: () => void;
   onError: (error: string) => void;
 }) {
+  // Route to Ollama if local model selected
+  if (model === "ollama/local") {
+    const ollamaConfig = getOllamaConfig();
+    return streamOllamaChat({
+      messages,
+      config: ollamaConfig,
+      onDelta,
+      onDone,
+      onError,
+    });
+  }
+
   try {
     const resp = await fetch(CHAT_URL, {
       method: "POST",
