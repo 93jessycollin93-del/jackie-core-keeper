@@ -26,11 +26,14 @@ import { ChatMediaBar, type PendingFile } from "@/components/ChatMediaBar";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { AttachmentDisplay } from "@/components/AttachmentDisplay";
 import { toast } from "sonner";
-import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle, ListTodo, Columns3, CalendarDays } from "lucide-react";
+import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle, ListTodo, Columns3, CalendarDays, Cpu, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { processTaskCommand } from "@/lib/task-commands";
+import { callHydraCoder, type HydraResponse } from "@/lib/hydra-client";
+import { HydraMeta } from "@/components/HydraMeta";
+import { HydraSettings } from "@/components/HydraSettings";
 import {
   listTags,
   createTag,
