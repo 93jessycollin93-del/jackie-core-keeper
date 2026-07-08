@@ -1045,10 +1045,12 @@ const Index = () => {
               <button
                 onClick={handleSubmit}
                 disabled={isProcessing || (!input.trim() && pendingFiles.length === 0)}
-                className="p-3 rounded-sm bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-30 transition-opacity btn-mechanical flex-shrink-0"
-                title="Send (Enter)"
+                className={`p-3 rounded-sm text-primary-foreground hover:opacity-90 disabled:opacity-30 transition-opacity btn-mechanical flex-shrink-0 ${
+                  coderMode ? "bg-gradient-to-br from-primary to-purple-500" : "bg-primary"
+                }`}
+                title={t("app.send")}
               >
-                <Send size={16} />
+                {coderMode ? <Cpu size={16} /> : <Send size={16} />}
               </button>
             </div>
             <div className="flex items-center justify-between mt-1.5 ml-5">
