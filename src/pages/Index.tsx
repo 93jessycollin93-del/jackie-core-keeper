@@ -965,7 +965,7 @@ const Index = () => {
             <button
               onClick={exportChat}
               className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors"
-              title="Export chat"
+              title={t("app.exportChat")}
             >
               <Download size={16} />
             </button>
@@ -973,7 +973,7 @@ const Index = () => {
           <button
             onClick={toggleTheme}
             className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors"
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={t("app.switchTheme")}
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
