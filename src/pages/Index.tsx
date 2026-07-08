@@ -314,13 +314,13 @@ const Sidebar = ({
                   }}
                   className="px-2 py-1 bg-primary text-primary-foreground font-mono text-[10px] rounded-sm hover:opacity-90"
                 >
-                  Create
+                  {t("app.create")}
                 </button>
                 <button
                   onClick={() => { setShowNewTag(false); setNewTagName(""); }}
                   className="px-2 py-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"
                 >
-                  Cancel
+                  {t("app.cancel")}
                 </button>
               </div>
             </div>
