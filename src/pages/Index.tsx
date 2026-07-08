@@ -1139,13 +1139,16 @@ const Index = () => {
           50% { width: 60%; margin-left: 20%; }
           100% { width: 0%; margin-left: 100%; }
         }
-        .prose pre { background: hsl(var(--secondary)); border: 1px solid hsl(var(--border)); border-radius: 2px; }
-        .prose code { font-family: var(--font-mono); font-size: 13px; }
+        .prose pre { background: hsl(var(--secondary)); border: 1px solid hsl(var(--border)); border-radius: 2px; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; overflow-x: hidden; }
+        .prose pre code { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+        .prose code { font-family: var(--font-mono); font-size: 13px; word-break: break-word; overflow-wrap: anywhere; }
         .prose p code { background: hsl(var(--secondary)); padding: 2px 6px; border-radius: 2px; }
-        .prose a { color: hsl(var(--primary)); }
+        .prose a { color: hsl(var(--primary)); word-break: break-all; }
         .prose strong { color: hsl(var(--foreground)); }
         .prose h1, .prose h2, .prose h3 { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; color: hsl(var(--foreground)); }
         .prose ul, .prose ol { color: hsl(var(--foreground) / 0.8); }
+        .prose p, .prose li { word-break: break-word; overflow-wrap: anywhere; }
+        .hydra-wrap { max-width: 100%; overflow-wrap: anywhere; }
       `}</style>
     </div>
   );
