@@ -341,7 +341,7 @@ const Sidebar = ({
         {/* Desktop navigation links */}
         <div className="p-2 border-t border-border space-y-0.5">
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Navigation
+            {t("nav.navigation", "Navigation")}
           </div>
           {[
             { path: "/tasks", icon: ListTodo, label: "nav.tasks" },
@@ -354,7 +354,7 @@ const Sidebar = ({
               className="w-full flex items-center gap-2 px-2 py-1.5 font-mono text-xs text-sidebar-foreground hover:bg-secondary/50 rounded-sm transition-colors"
             >
               <item.icon size={12} className="text-muted-foreground" />
-              {item.label.split(".")[1].charAt(0).toUpperCase() + item.label.split(".")[1].slice(1)}
+              {t(item.label)}
             </button>
           ))}
         </div>
