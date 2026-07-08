@@ -100,6 +100,7 @@ const Sidebar = ({
   onDeleteTag: (id: string) => void;
   onToggleTag: (convId: string, tagId: string, has: boolean) => void;
 }) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewTag, setShowNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
