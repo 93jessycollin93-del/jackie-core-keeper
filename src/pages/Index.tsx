@@ -493,6 +493,7 @@ const CORE_FILES = [
 ];
 
 const Index = () => {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -507,6 +508,8 @@ const Index = () => {
   const [tags, setTags] = useState<TagType[]>([]);
   const [tagMap, setTagMap] = useState<Record<string, string[]>>({});
   const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
+  const [coderMode, setCoderMode] = useState(false);
+  const [hydraSettingsOpen, setHydraSettingsOpen] = useState(false);
 
   const changeModel = useCallback(async (model: JackieModelId) => {
     setSelectedModel(model);
