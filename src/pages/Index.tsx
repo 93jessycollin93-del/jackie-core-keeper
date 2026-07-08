@@ -54,6 +54,7 @@ interface DisplayMessage {
   memoryTier?: 1 | 2 | 3;
   securityFlag?: string | null;
   attachments?: Attachment[];
+  hydra?: HydraResponse;
 }
 
 // ─── Sidebar ───────────────────────────────────────────────
