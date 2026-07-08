@@ -946,7 +946,7 @@ const Index = () => {
             <div className="flex flex-col items-center gap-2">
               <Download size={32} className="text-primary" />
               <span className="font-mono text-xs uppercase tracking-widest text-primary">
-                Drop files here
+                {t("app.dropFiles")}
               </span>
             </div>
           </div>
