@@ -204,11 +204,11 @@ const Sidebar = ({
 
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground flex items-center justify-between">
-            <span>Conversations {(searchQuery || activeTagFilter) && `(${filtered.length})`}</span>
+            <span>{t("app.conversations")} {(searchQuery || activeTagFilter) && `(${filtered.length})`}</span>
           </div>
           {filtered.length === 0 && (
             <div className="px-2 py-2 text-xs text-muted-foreground">
-              {searchQuery || activeTagFilter ? "No matches found." : "No conversations yet."}
+              {searchQuery || activeTagFilter ? t("app.noMatches") : t("app.noConversations")}
             </div>
           )}
           {filtered.map((conv) => {
