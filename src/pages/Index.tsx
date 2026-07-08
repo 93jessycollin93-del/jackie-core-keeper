@@ -151,14 +151,14 @@ const Sidebar = ({
               <button
                 onClick={onNew}
                 className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors duration-150"
-                title="New conversation"
+                title={t("app.newConversation")}
               >
                 <Plus size={14} />
               </button>
               <button
                 onClick={onToggleTheme}
                 className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors duration-150"
-                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                title={t("app.switchTheme")}
               >
                 {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
               </button>
