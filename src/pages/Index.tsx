@@ -395,6 +395,7 @@ const MemoryDots = ({ tier }: { tier: 1 | 2 | 3 }) => {
 // ─── Messages ──────────────────────────────────────────────
 
 const JackieMessage = ({ message }: { message: DisplayMessage }) => {
+  const { t } = useTranslation();
   const [speaking, setSpeaking] = useState(false);
 
   const toggleSpeak = async () => {
@@ -415,13 +416,15 @@ const JackieMessage = ({ message }: { message: DisplayMessage }) => {
   return (
     <div className="space-y-3 stagger-enter">
       <div className="flex items-center justify-between">
-        <span className="jackie-badge">Jackie here—</span>
+        <span className="jackie-badge">
+          {message.hydra ? t("hydra.badge", "Hydra Coder—") : "Jackie here—"}
+        </span>
         <div className="flex items-center gap-2">
           {voiceManager.isSupported() && (
             <button
               onClick={toggleSpeak}
               className="p-1 rounded-sm text-muted-foreground hover:text-primary transition-colors"
-              title={speaking ? "Stop speaking" : "Read aloud"}
+              title={speaking ? t("app.stopSpeaking", "Stop speaking") : t("app.readAloud", "Read aloud")}
             >
               {speaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
             </button>
@@ -438,9 +441,20 @@ const JackieMessage = ({ message }: { message: DisplayMessage }) => {
         </div>
       )}
 
-      <div className="text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+      <div className="text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert hydra-wrap">
         <ReactMarkdown>{message.content}</ReactMarkdown>
       </div>
+
+      {message.hydra && (
+        <HydraMeta
+          winner={message.hydra.winner}
+          candidates={message.hydra.candidates}
+          total_latency_ms={message.hydra.total_latency_ms}
+          judge_latency_ms={message.hydra.judge_latency_ms}
+          source={message.hydra.source}
+          reasoning={message.hydra.reasoning}
+        />
+      )}
 
       {message.attachments && message.attachments.length > 0 && (
         <AttachmentDisplay attachments={message.attachments} />
