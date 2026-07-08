@@ -329,7 +329,7 @@ const Sidebar = ({
 
         <div className="p-2 border-t border-border space-y-0.5">
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Core
+            {t("app.core")}
           </div>
           {coreFiles.map((file) => (
             <div key={file} className="px-2 py-1 font-mono text-[11px] text-muted-foreground truncate">
