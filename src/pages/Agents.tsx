@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Agent, createAgent, deleteAgent, listAgents, updateAgent } from "@/lib/agents-db";
-import { TOOLS, TOOL_CATEGORIES } from "@/lib/tools-registry";
+import { TOOLS, TOOL_CATEGORIES, TOOL_BY_ID } from "@/lib/tools-registry";
+import { runTool } from "@/lib/tool-runner";
+import { compressPod } from "@/lib/pods-db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Bot, Plus, Trash2, Save, X } from "lucide-react";
+import { Bot, Plus, Trash2, Save, X, Play, Zap } from "lucide-react";
 
 const MODELS = [
   "google/gemini-3-flash-preview",
