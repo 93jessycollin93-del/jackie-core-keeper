@@ -54,10 +54,41 @@ export default function Agents() {
         tool_ids: editing.tool_ids,
       });
       toast.success("Agent saved");
+      // Auto-compress the parent pod when an agent inside it changes
+      if (editing.pod_id) {
+        compressPod(editing.pod_id).catch(() => {/* silent */});
+      }
       await refresh();
       setEditing(null);
     } catch (e: any) { toast.error(e.message); }
   };
+
+  const handleTest = async (toolId: string) => {
+    const def = TOOL_BY_ID.get(toolId);
+    if (!def?.executable) { toast.error(`${toolId} not executable`); return; }
+    // Minimal probe args per tool
+    const probes: Record<string, any> = {
+      calculator: { expr: "2+2" },
+      web_search: { query: "hello" },
+      http_request: { url: "https://httpbin.org/get" },
+      token_counter: { text: "hello world" },
+      system_info: {},
+      model_status_check: {},
+      network_check: { host: "1.1.1.1" },
+      json_parse: { text: '{"a":1}' },
+      markdown_to_html: { md: "**hi**" },
+      gemini_api: { prompt: "say hi in 3 words" },
+      code_execute_javascript: { code: "return 1+1;" },
+    };
+    const args = probes[toolId] ?? {};
+    toast.loading(`Testing ${def.name}…`, { id: toolId });
+    const res = await runTool(toolId, args);
+    toast.dismiss(toolId);
+    if (res.ok) toast.success(`${def.name}: OK`);
+    else toast.error(`${def.name}: ${res.error}`);
+    console.log(`[tool:${toolId}]`, res);
+  };
+
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this agent?")) return;
