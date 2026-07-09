@@ -12,6 +12,8 @@ import Auth from "./pages/Auth";
 import Tasks from "./pages/Tasks";
 import TaskBoard from "./pages/TaskBoard";
 import TaskCalendar from "./pages/TaskCalendar";
+import Agents from "./pages/Agents";
+import Pods from "./pages/Pods";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +82,8 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route path="/agents" element={<ProtectedRoute><AppLayout><Agents /></AppLayout></ProtectedRoute>} />
+              <Route path="/pods" element={<ProtectedRoute><AppLayout><Pods /></AppLayout></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

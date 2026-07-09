@@ -1,12 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
-import { MessageSquare, ListTodo, Columns3, CalendarDays } from "lucide-react";
+import { MessageSquare, ListTodo, Bot, Box } from "lucide-react";
 
 const NAV_ITEMS = [
   { path: "/", icon: MessageSquare, labelKey: "nav.chat" },
   { path: "/tasks", icon: ListTodo, labelKey: "nav.tasks" },
-  { path: "/tasks/board", icon: Columns3, labelKey: "nav.board" },
-  { path: "/tasks/calendar", icon: CalendarDays, labelKey: "nav.calendar" },
+  { path: "/agents", icon: Bot, labelKey: "nav.agents" },
+  { path: "/pods", icon: Box, labelKey: "nav.pods" },
 ] as const;
 
 export const BottomNav = () => {
