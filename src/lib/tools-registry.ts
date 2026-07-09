@@ -1,125 +1,81 @@
-// 100 curated tool definitions. Rename/replace freely — this is the source of truth
-// for what agents can pick from in the Agent Editor.
 export type ToolDef = {
   id: string;
   name: string;
   category: string;
   description: string;
+  needsKey?: string;    // env var name required, if any
+  executable?: boolean; // has real implementation in tool-exec edge fn
 };
 
-const T = (id: string, name: string, category: string, description: string): ToolDef => ({
-  id, name, category, description,
-});
+const T = (
+  id: string, name: string, category: string, description: string,
+  opts: { needsKey?: string; executable?: boolean } = {}
+): ToolDef => ({ id, name, category, description, ...opts });
 
 export const TOOLS: ToolDef[] = [
-  // Web & Search (1-10)
-  T("web.search", "Web Search", "Web", "General web search via query"),
-  T("web.fetch", "Fetch URL", "Web", "HTTP GET a URL and return text/html"),
-  T("web.scrape", "Scrape Page", "Web", "Extract main content from a URL"),
-  T("web.screenshot", "Screenshot URL", "Web", "Capture screenshot of a webpage"),
-  T("web.pdf", "URL to PDF", "Web", "Render a URL as PDF"),
-  T("web.news", "News Search", "Web", "Search recent news articles"),
-  T("web.images", "Image Search", "Web", "Search images on the web"),
-  T("web.videos", "Video Search", "Web", "Search videos on the web"),
-  T("web.maps", "Maps Lookup", "Web", "Geocode and place search"),
-  T("web.weather", "Weather", "Web", "Current + forecast weather by location"),
-  // Code & Dev (11-25)
-  T("code.exec.py", "Run Python", "Code", "Execute Python snippet, capture stdout"),
-  T("code.exec.js", "Run JavaScript", "Code", "Execute JS snippet in sandbox"),
-  T("code.exec.sh", "Run Shell", "Code", "Run shell command in sandbox"),
-  T("code.lint", "Lint Code", "Code", "Static analysis on a snippet"),
-  T("code.format", "Format Code", "Code", "Prettier/Black formatter"),
-  T("code.diff", "Diff Files", "Code", "Compute diff between two texts"),
-  T("code.grep", "Grep Codebase", "Code", "Regex search across files"),
-  T("code.readfile", "Read File", "Code", "Read a project file"),
-  T("code.writefile", "Write File", "Code", "Write a project file"),
-  T("code.test", "Run Tests", "Code", "Execute test suite"),
-  T("code.build", "Build Project", "Code", "Run build/compile step"),
-  T("code.deploy", "Deploy", "Code", "Trigger deployment"),
-  T("code.git.log", "Git Log", "Code", "Recent commits summary"),
-  T("code.git.blame", "Git Blame", "Code", "Blame a file line range"),
-  T("code.package.search", "Package Search", "Code", "Search npm/pypi packages"),
-  // Data & Files (26-40)
-  T("data.csv.read", "Parse CSV", "Data", "Parse CSV into rows"),
-  T("data.csv.write", "Write CSV", "Data", "Write rows to CSV"),
-  T("data.json.query", "JQ Query", "Data", "Query JSON with jq syntax"),
-  T("data.xml.parse", "Parse XML", "Data", "Parse XML/HTML"),
-  T("data.md.render", "Render Markdown", "Data", "Markdown → HTML"),
-  T("data.excel.read", "Read XLSX", "Data", "Read Excel spreadsheet"),
-  T("data.excel.write", "Write XLSX", "Data", "Write Excel spreadsheet"),
-  T("data.pdf.read", "Read PDF", "Data", "Extract text from PDF"),
-  T("data.pdf.write", "Write PDF", "Data", "Generate PDF from content"),
-  T("data.zip", "Zip Files", "Data", "Bundle files into zip"),
-  T("data.unzip", "Unzip", "Data", "Extract zip archive"),
-  T("data.sql.query", "SQL Query", "Data", "Run SELECT on connected DB"),
-  T("data.sql.mutate", "SQL Mutate", "Data", "Run INSERT/UPDATE/DELETE"),
-  T("data.vector.search", "Vector Search", "Data", "Semantic search over embeddings"),
-  T("data.vector.upsert", "Vector Upsert", "Data", "Store text as embedding"),
-  // AI & Media (41-55)
-  T("ai.image.gen", "Generate Image", "AI", "Text-to-image"),
-  T("ai.image.edit", "Edit Image", "AI", "Inpaint/modify existing image"),
-  T("ai.image.caption", "Caption Image", "AI", "Describe image contents"),
-  T("ai.ocr", "OCR", "AI", "Extract text from image"),
-  T("ai.tts", "Text to Speech", "AI", "Synthesize voice audio"),
-  T("ai.stt", "Speech to Text", "AI", "Transcribe audio"),
-  T("ai.translate", "Translate", "AI", "Translate text between languages"),
-  T("ai.summarize", "Summarize", "AI", "Concise summary of long text"),
-  T("ai.classify", "Classify", "AI", "Label text into categories"),
-  T("ai.extract", "Extract Fields", "AI", "Structured extraction to JSON"),
-  T("ai.embed", "Embed Text", "AI", "Produce embedding vector"),
-  T("ai.rerank", "Rerank Results", "AI", "Rerank candidates by query"),
-  T("ai.moderate", "Moderate Content", "AI", "Safety/toxicity classification"),
-  T("ai.video.gen", "Generate Video", "AI", "Text-to-video short clip"),
-  T("ai.music.gen", "Generate Music", "AI", "Text-to-music clip"),
-  // Comms (56-70)
-  T("comm.email.send", "Send Email", "Comms", "Send an email"),
-  T("comm.email.read", "Read Inbox", "Comms", "List/read emails"),
-  T("comm.sms.send", "Send SMS", "Comms", "Send SMS message"),
-  T("comm.slack.post", "Slack Post", "Comms", "Post to a Slack channel"),
-  T("comm.slack.read", "Slack Read", "Comms", "Read Slack channel"),
-  T("comm.discord.post", "Discord Post", "Comms", "Post to Discord"),
-  T("comm.telegram.send", "Telegram Send", "Comms", "Send Telegram message"),
-  T("comm.whatsapp.send", "WhatsApp Send", "Comms", "Send WhatsApp message"),
-  T("comm.push", "Push Notification", "Comms", "Send device push"),
-  T("comm.call", "Voice Call", "Comms", "Place outbound voice call"),
-  T("comm.webhook", "Post Webhook", "Comms", "HTTP POST to a webhook"),
-  T("comm.calendar.create", "Create Event", "Comms", "Add calendar event"),
-  T("comm.calendar.list", "List Events", "Comms", "Read upcoming events"),
-  T("comm.contacts.search", "Search Contacts", "Comms", "Look up a contact"),
-  T("comm.meeting.schedule", "Schedule Meeting", "Comms", "Find slot & invite attendees"),
-  // Productivity (71-85)
-  T("prod.task.create", "Create Task", "Productivity", "Create task in Jackie"),
-  T("prod.task.update", "Update Task", "Productivity", "Modify a task"),
-  T("prod.task.list", "List Tasks", "Productivity", "Query tasks by filter"),
-  T("prod.note.create", "Create Note", "Productivity", "Save a note"),
-  T("prod.note.search", "Search Notes", "Productivity", "Search notes by text"),
-  T("prod.timer.start", "Start Timer", "Productivity", "Begin a timer"),
-  T("prod.timer.stop", "Stop Timer", "Productivity", "End a timer"),
-  T("prod.reminder", "Set Reminder", "Productivity", "Schedule a reminder"),
-  T("prod.doc.create", "Create Doc", "Productivity", "Create doc/page"),
-  T("prod.doc.append", "Append to Doc", "Productivity", "Append content"),
-  T("prod.kanban.move", "Move Card", "Productivity", "Move Kanban card between columns"),
-  T("prod.pomodoro", "Pomodoro", "Productivity", "Run pomodoro cycle"),
-  T("prod.habit.log", "Log Habit", "Productivity", "Record habit occurrence"),
-  T("prod.goal.set", "Set Goal", "Productivity", "Create a goal"),
-  T("prod.journal.append", "Journal Entry", "Productivity", "Add journal entry"),
-  // System & Memory (86-100)
-  T("sys.memory.write", "Write Memory", "System", "Persist to Jackie's memory"),
-  T("sys.memory.read", "Read Memory", "System", "Recall from memory"),
-  T("sys.memory.forget", "Forget Memory", "System", "Delete a memory"),
-  T("sys.pod.compress", "Compress Pod", "System", "Summarize a compression pod"),
-  T("sys.pod.expand", "Expand Pod", "System", "Fetch full contents of a pod"),
-  T("sys.agent.call", "Call Agent", "System", "Delegate to another agent"),
-  T("sys.agent.list", "List Agents", "System", "List available agents"),
-  T("sys.clock.now", "Current Time", "System", "Return current date/time"),
-  T("sys.random", "Random", "System", "Random number/choice"),
-  T("sys.math.calc", "Calculator", "System", "Evaluate math expression"),
-  T("sys.units.convert", "Unit Convert", "System", "Convert units"),
-  T("sys.currency.convert", "Currency Convert", "System", "Convert currency"),
-  T("sys.hash", "Hash", "System", "Hash text (sha256, md5)"),
-  T("sys.uuid", "UUID", "System", "Generate UUID"),
-  T("sys.env.get", "Get Setting", "System", "Read an app setting"),
+  // CORE EXECUTION
+  T("web_search", "Web Search", "Core Execution", "DuckDuckGo/Google search", { executable: true }),
+  T("code_execute_python", "Run Python", "Core Execution", "Execute Python in sandbox", { executable: true }),
+  T("code_execute_bash", "Run Bash", "Core Execution", "Execute shell command", { executable: true }),
+  T("code_execute_javascript", "Run JavaScript", "Core Execution", "Execute JS via Deno", { executable: true }),
+  T("http_request", "HTTP Request", "Core Execution", "GET/POST/etc any URL", { executable: true }),
+  T("calculator", "Calculator", "Core Execution", "Evaluate math expressions", { executable: true }),
+
+  // FILE & DATA
+  T("file_read", "File Read", "File & Data", "Read from storage bucket", { executable: true }),
+  T("file_write", "File Write", "File & Data", "Write to storage bucket", { executable: true }),
+  T("file_delete", "File Delete", "File & Data", "Delete from storage bucket", { executable: true }),
+  T("file_list", "File List", "File & Data", "List storage bucket contents", { executable: true }),
+  T("json_parse", "JSON Parse", "File & Data", "Parse & query JSON", { executable: true }),
+  T("csv_handler", "CSV Handler", "File & Data", "Parse/emit CSV", { executable: true }),
+  T("yaml_parser", "YAML Parser", "File & Data", "Parse YAML to JSON", { executable: true }),
+  T("markdown_to_html", "Markdown → HTML", "File & Data", "Render markdown", { executable: true }),
+
+  // AI & MODELS
+  T("ollama_call", "Ollama Call", "AI & Models", "Local Ollama endpoint", { executable: true, needsKey: "OLLAMA_BASE_URL" }),
+  T("claude_api", "Claude", "AI & Models", "Anthropic Claude API", { needsKey: "ANTHROPIC_API_KEY" }),
+  T("groq_api", "Groq", "AI & Models", "Groq free inference", { executable: true, needsKey: "GROQ_API_KEY" }),
+  T("gemini_api", "Gemini (Lovable)", "AI & Models", "Google Gemini via Lovable Gateway", { executable: true }),
+  T("model_status_check", "Model Status", "AI & Models", "Ping model endpoints", { executable: true }),
+
+  // SYSTEM MONITORING (edge-side — reports what's available in serverless runtime)
+  T("system_info", "System Info", "System Monitoring", "Runtime info (edge)", { executable: true }),
+  T("gpu_monitor", "GPU Monitor", "System Monitoring", "nvidia-smi (requires local agent)", {}),
+  T("thermal_info", "Thermal Info", "System Monitoring", "GPU temp (requires local agent)", {}),
+  T("process_list", "Process List", "System Monitoring", "Requires local agent", {}),
+  T("network_check", "Network Check", "System Monitoring", "Reachability + latency", { executable: true }),
+  T("disk_space", "Disk Space", "System Monitoring", "Requires local agent", {}),
+
+  // GITHUB
+  T("github_issue_read", "GH Issue Read", "GitHub", "Read an issue", { executable: true, needsKey: "GITHUB_TOKEN" }),
+  T("github_pr_read", "GH PR Read", "GitHub", "Read a pull request", { executable: true, needsKey: "GITHUB_TOKEN" }),
+  T("github_search_code", "GH Search Code", "GitHub", "Search code across GH", { executable: true, needsKey: "GITHUB_TOKEN" }),
+  T("github_commit_info", "GH Commit Info", "GitHub", "Read commit details", { executable: true, needsKey: "GITHUB_TOKEN" }),
+  T("repo_info", "Repo Info", "GitHub", "Repo metadata", { executable: true, needsKey: "GITHUB_TOKEN" }),
+
+  // INTEGRATIONS
+  T("slack_send", "Slack Send", "Integrations", "Post via incoming webhook", { executable: true, needsKey: "SLACK_WEBHOOK_URL" }),
+  T("email_send", "Email Send", "Integrations", "SMTP/Resend send", { needsKey: "RESEND_API_KEY" }),
+  T("discord_notify", "Discord Notify", "Integrations", "Discord webhook", { executable: true, needsKey: "DISCORD_WEBHOOK_URL" }),
+  T("webhook_call", "Webhook Call", "Integrations", "Arbitrary webhook POST", { executable: true }),
+
+  // TEXT / NLP
+  T("text_summarize", "Summarize", "Text/NLP", "Summarize text via Gemini", { executable: true }),
+  T("sentiment_analyze", "Sentiment", "Text/NLP", "Classify sentiment", { executable: true }),
+  T("token_counter", "Token Counter", "Text/NLP", "Approx token count", { executable: true }),
+  T("language_detect", "Language Detect", "Text/NLP", "Detect language", { executable: true }),
+
+  // DATABASE
+  T("sql_query", "SQL Query", "Database", "SELECT on connected DB", { executable: true }),
+  T("postgres_connect", "Postgres Connect", "Database", "Connection health check", { executable: true }),
+  T("sqlite_query", "SQLite Query", "Database", "SQLite in-memory query", { executable: true }),
+
+  // SECURITY
+  T("api_key_validator", "API Key Validator", "Security", "Shape/prefix check", { executable: true }),
+  T("ssl_cert_check", "SSL Cert Check", "Security", "Check TLS cert of host", { executable: true }),
+  T("auth_token_check", "Auth Token Check", "Security", "Decode/validate JWT", { executable: true }),
 ];
 
 export const TOOL_CATEGORIES = Array.from(new Set(TOOLS.map(t => t.category)));
 export const TOOL_BY_ID = new Map(TOOLS.map(t => [t.id, t]));
+export const EXECUTABLE_TOOLS = TOOLS.filter(t => t.executable);
