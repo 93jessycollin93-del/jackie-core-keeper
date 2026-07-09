@@ -23,7 +23,7 @@ export async function listAgents(): Promise<Agent[]> {
 export async function createAgent(input: Partial<Agent> & { name: string }): Promise<Agent> {
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("Not authenticated");
-  const { data, error } = await supabase.from("agents").insert({
+  const { data, error } = await supabase.from("agents").insert([{
     user_id: userData.user.id,
     name: input.name,
     description: input.description ?? null,
@@ -32,13 +32,13 @@ export async function createAgent(input: Partial<Agent> & { name: string }): Pro
     tool_ids: input.tool_ids ?? [],
     pod_id: input.pod_id ?? null,
     flow: input.flow ?? {},
-  }).select().single();
+  }]).select().single();
   if (error) throw error;
   return data as Agent;
 }
 
 export async function updateAgent(id: string, patch: Partial<Agent>): Promise<Agent> {
-  const { data, error } = await supabase.from("agents").update(patch).eq("id", id).select().single();
+  const { data, error } = await supabase.from("agents").update(patch as any).eq("id", id).select().single();
   if (error) throw error;
   return data as Agent;
 }
