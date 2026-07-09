@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          description: string | null
+          flow: Json
+          id: string
+          model: string
+          name: string
+          pod_id: string | null
+          system_prompt: string
+          tool_ids: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          flow?: Json
+          id?: string
+          model?: string
+          name: string
+          pod_id?: string | null
+          system_prompt?: string
+          tool_ids?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          flow?: Json
+          id?: string
+          model?: string
+          name?: string
+          pod_id?: string | null
+          system_prompt?: string
+          tool_ids?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_attachments: {
         Row: {
           conversation_id: string
@@ -195,6 +245,53 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      pods: {
+        Row: {
+          compressed_at: string | null
+          compressed_context: string | null
+          created_at: string
+          description: string | null
+          id: string
+          item_refs: Json
+          name: string
+          parent_pod_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          compressed_at?: string | null
+          compressed_context?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_refs?: Json
+          name: string
+          parent_pod_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          compressed_at?: string | null
+          compressed_context?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_refs?: Json
+          name?: string
+          parent_pod_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pods_parent_pod_id_fkey"
+            columns: ["parent_pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_label_links: {
         Row: {
