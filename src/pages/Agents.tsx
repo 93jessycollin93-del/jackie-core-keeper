@@ -189,18 +189,32 @@ export default function Agents() {
                       <div className="text-[10px] font-mono uppercase text-muted-foreground mb-1">{cat}</div>
                       <div className="grid grid-cols-2 gap-1">
                         {TOOLS.filter(t => t.category === cat).map(t => (
-                          <label key={t.id} className="flex items-start gap-2 text-xs p-1.5 rounded hover:bg-muted cursor-pointer">
+                          <div key={t.id} className="flex items-start gap-2 text-xs p-1.5 rounded hover:bg-muted">
                             <input
                               type="checkbox"
                               checked={editing.tool_ids.includes(t.id)}
                               onChange={() => toggleTool(t.id)}
-                              className="mt-0.5"
+                              className="mt-0.5 cursor-pointer"
                             />
-                            <span>
-                              <span className="font-mono">{t.name}</span>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-1">
+                                <span className="font-mono">{t.name}</span>
+                                {t.executable && <span className="text-[8px] px-1 rounded bg-primary/20 text-primary font-mono">EXE</span>}
+                                {t.needsKey && <span className="text-[8px] px-1 rounded bg-destructive/20 text-destructive font-mono" title={`needs ${t.needsKey}`}>KEY</span>}
+                              </div>
                               <span className="block text-muted-foreground text-[10px]">{t.description}</span>
-                            </span>
-                          </label>
+                            </div>
+                            {t.executable && (
+                              <button
+                                type="button"
+                                onClick={() => handleTest(t.id)}
+                                className="text-primary hover:bg-primary/10 rounded p-1"
+                                title="Test"
+                              >
+                                <Play size={10} />
+                              </button>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
