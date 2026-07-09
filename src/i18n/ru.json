@@ -32,7 +32,9 @@
     "tasks": "Задачи",
     "board": "Доска",
     "calendar": "Календарь",
-    "navigation": "Навигация"
+    "navigation": "Навигация",
+    "agents": "Агенты",
+    "pods": "Поды"
   },
   "memory": {
     "tier": "Уровень памяти",

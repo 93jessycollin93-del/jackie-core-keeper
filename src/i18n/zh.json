@@ -32,7 +32,9 @@
     "tasks": "任务",
     "board": "看板",
     "calendar": "日历",
-    "navigation": "导航"
+    "navigation": "导航",
+    "agents": "代理",
+    "pods": "舱"
   },
   "memory": {
     "tier": "记忆层级",
