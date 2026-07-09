@@ -22,18 +22,18 @@ export async function listPods(): Promise<Pod[]> {
 export async function createPod(input: { name: string; parent_pod_id?: string | null; description?: string }): Promise<Pod> {
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("Not authenticated");
-  const { data, error } = await supabase.from("pods").insert({
+  const { data, error } = await supabase.from("pods").insert([{
     user_id: userData.user.id,
     name: input.name,
     parent_pod_id: input.parent_pod_id ?? null,
     description: input.description ?? null,
-  }).select().single();
+  }]).select().single();
   if (error) throw error;
   return data as Pod;
 }
 
 export async function updatePod(id: string, patch: Partial<Pod>): Promise<Pod> {
-  const { data, error } = await supabase.from("pods").update(patch).eq("id", id).select().single();
+  const { data, error } = await supabase.from("pods").update(patch as any).eq("id", id).select().single();
   if (error) throw error;
   return data as Pod;
 }
