@@ -9,7 +9,7 @@ export type Agent = {
   system_prompt: string;
   model: string;
   tool_ids: string[];
-  flow: Record<string, unknown>;
+  flow: any;
   created_at: string;
   updated_at: string;
 };
