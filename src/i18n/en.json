@@ -32,7 +32,9 @@
     "tasks": "Tasks",
     "board": "Board",
     "calendar": "Calendar",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "agents": "Agents",
+    "pods": "Pods"
   },
   "memory": {
     "tier": "Memory tier",
