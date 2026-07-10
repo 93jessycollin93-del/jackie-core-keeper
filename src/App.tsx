@@ -33,10 +33,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import { IndexFinder } from "@/components/IndexFinder";
+
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <>
     {children}
     <BottomNav />
+    <IndexFinder />
   </>
 );
 
