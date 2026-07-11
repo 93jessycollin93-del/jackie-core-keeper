@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
-import { MessageSquare, ListTodo, Bot, Box } from "lucide-react";
+import { MessageSquare, ListTodo, Bot, Box, FolderTree } from "lucide-react";
 
 const NAV_ITEMS = [
   { path: "/", icon: MessageSquare, labelKey: "nav.chat" },
   { path: "/tasks", icon: ListTodo, labelKey: "nav.tasks" },
+  { path: "/files", icon: FolderTree, labelKey: "nav.files" },
   { path: "/agents", icon: Bot, labelKey: "nav.agents" },
   { path: "/pods", icon: Box, labelKey: "nav.pods" },
 ] as const;

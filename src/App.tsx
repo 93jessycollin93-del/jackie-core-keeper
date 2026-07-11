@@ -14,6 +14,7 @@ import TaskBoard from "./pages/TaskBoard";
 import TaskCalendar from "./pages/TaskCalendar";
 import Agents from "./pages/Agents";
 import Pods from "./pages/Pods";
+import Files from "./pages/Files";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -87,6 +88,7 @@ const App = () => (
               />
               <Route path="/agents" element={<ProtectedRoute><AppLayout><Agents /></AppLayout></ProtectedRoute>} />
               <Route path="/pods" element={<ProtectedRoute><AppLayout><Pods /></AppLayout></ProtectedRoute>} />
+              <Route path="/files" element={<ProtectedRoute><AppLayout><Files /></AppLayout></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

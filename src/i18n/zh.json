@@ -30,6 +30,7 @@
   "nav": {
     "chat": "聊天",
     "tasks": "任务",
+    "files": "文件",
     "board": "看板",
     "calendar": "日历",
     "navigation": "导航",
