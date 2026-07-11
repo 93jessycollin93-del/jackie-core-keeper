@@ -30,6 +30,7 @@
   "nav": {
     "chat": "Chat",
     "tasks": "Tasks",
+    "files": "Files",
     "board": "Board",
     "calendar": "Calendar",
     "navigation": "Navigation",

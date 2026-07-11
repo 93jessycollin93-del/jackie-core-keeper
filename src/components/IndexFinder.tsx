@@ -24,6 +24,8 @@ const CMDS: { phrase: string; route?: string; action?: string }[] = [
   { phrase: "open agents", route: "/agents" },
   { phrase: "open pods", route: "/pods" },
   { phrase: "open notes", route: "/pods" },
+  { phrase: "open files", route: "/files" },
+  { phrase: "open vault", route: "/files" },
   { phrase: "open telegram", action: "external:https://t.me" },
   { phrase: "clean system", action: "clean" },
   { phrase: "compress all", action: "compress" },
