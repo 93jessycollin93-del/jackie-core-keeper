@@ -118,6 +118,8 @@ export const PROVIDERS: ProviderDef[] = [
       { id: "microsoft/phi-3-mini-128k-instruct:free", label: "Phi-3 Mini 128k", free: true },
     ],
   },
+];
+
 
 export function findProvider(id: ProviderId): ProviderDef | undefined {
   return PROVIDERS.find((p) => p.id === id);
