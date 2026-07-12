@@ -21,7 +21,7 @@ export function getChatPreset(): ChatPreset {
     const parsed = JSON.parse(raw);
     if (!parsed?.model) return DEFAULT;
     return {
-      provider: parsed.provider || "lovable",
+      provider: parsed.provider || "ollama",
       model: parsed.model,
       system: parsed.system,
     };
