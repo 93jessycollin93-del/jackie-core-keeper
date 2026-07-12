@@ -13,11 +13,11 @@ export default function GunitUsers() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("gunit_memory").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("gunit_bots").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("gunit_improvements").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("gunit_agents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("api_keys").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      (supabase as any).from("gunit_memory").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      (supabase as any).from("gunit_bots").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      (supabase as any).from("gunit_improvements").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      (supabase as any).from("gunit_agents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      (supabase as any).from("api_keys").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     ]).then(([mem, bots, imp, ag, keys]) => {
       setStats({
         messages: mem.count || 0,

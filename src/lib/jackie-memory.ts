@@ -24,7 +24,7 @@ async function getUserId(): Promise<string> {
 
 // ── CRUD ──
 export async function getMemories(category?: MemoryCategory): Promise<JackieMemory[]> {
-  let query = supabase.from("jackie_memory").select("*").order("updated_at", { ascending: false });
+  let query = (supabase as any).from("jackie_memory").select("*").order("updated_at", { ascending: false });
   if (category) query = query.eq("category", category);
   const { data, error } = await query;
   if (error) throw error;
@@ -81,7 +81,7 @@ export async function upsertMemory(
 }
 
 export async function deleteMemory(id: string): Promise<void> {
-  const { error } = await supabase.from("jackie_memory").delete().eq("id", id);
+  const { error } = await (supabase as any).from("jackie_memory").delete().eq("id", id);
   if (error) throw error;
 }
 

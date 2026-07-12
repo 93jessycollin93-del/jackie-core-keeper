@@ -65,7 +65,7 @@ export default function BotFoundry() {
     (async () => {
       setSaving(true);
       try {
-        const { data, error } = await supabase.from("user_bots" as any).insert({
+        const { data, error } = await (supabase as any).from("user_bots" as any).insert({
           user_id: user.id,
           name: plan.name,
           purpose: plan.purpose,
