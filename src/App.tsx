@@ -43,7 +43,9 @@ import ApexHub from "./pages/ApexHub";
 import AIProviders from "./pages/AIProviders";
 import PodStation from "./pages/PodStation";
 import Design from "./pages/Design";
+import Setup from "./pages/Setup";
 import NotFound from "./pages/NotFound";
+
 
 
 
