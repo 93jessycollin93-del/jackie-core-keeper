@@ -136,7 +136,7 @@ export function SetupWizard() {
   };
 
   // Step 2 — provider
-  const [providerId, setProviderId] = useState<string>("openai");
+  const [providerId, setProviderId] = useState<string>("ollama");
   const provider = useMemo(() => PROVIDERS.find((p) => p.id === providerId)!, [providerId]);
   const [rawKey, setRawKey] = useState("");
   const validation = useMemo(
