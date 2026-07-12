@@ -158,3 +158,99 @@ export const OLLAMA_AGENTS = [
     role: "Image understanding",
   },
 ];
+
+// Agent frameworks Jackie can orchestrate. All run locally via Ollama (primary)
+// with recommended 2026-era models. Users pick a framework, we surface the
+// recommended model shortlist. No API costs — you own the stack.
+export interface FrameworkDef {
+  id: string;
+  label: string;
+  category: "graph" | "crew" | "workflow" | "rag" | "kernel";
+  description: string;
+  docsUrl: string;
+  recommendedModels: string[]; // ollama model ids or names
+}
+
+export const FRAMEWORKS: FrameworkDef[] = [
+  {
+    id: "langgraph",
+    label: "LangGraph",
+    category: "graph",
+    description: "Stateful, graph-based agent orchestration. Best for complex branching workflows.",
+    docsUrl: "https://langchain-ai.github.io/langgraph/",
+    recommendedModels: ["qwen2.5:32b", "qwen2.5-coder:32b", "llama3.3:70b", "gemma2:27b", "glm-4:32b"],
+  },
+  {
+    id: "crewai",
+    label: "CrewAI",
+    category: "crew",
+    description: "Role-playing autonomous AI agents that collaborate as a crew.",
+    docsUrl: "https://docs.crewai.com/",
+    recommendedModels: ["qwen2.5:14b", "qwen2.5:32b", "llama3.3:70b", "gemma2:27b", "kimi-k2:code"],
+  },
+  {
+    id: "dify",
+    label: "Dify",
+    category: "workflow",
+    description: "Open-source LLMOps platform. Visual workflow + RAG + agents.",
+    docsUrl: "https://docs.dify.ai/",
+    recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "glm-4:32b", "gemma2:27b"],
+  },
+  {
+    id: "autogen",
+    label: "AutoGen",
+    category: "crew",
+    description: "Microsoft's multi-agent conversation framework.",
+    docsUrl: "https://microsoft.github.io/autogen/",
+    recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "glm-4:32b", "minimax-m2:7b"],
+  },
+  {
+    id: "n8n",
+    label: "n8n",
+    category: "workflow",
+    description: "Fair-code workflow automation with AI agent nodes.",
+    docsUrl: "https://docs.n8n.io/advanced-ai/",
+    recommendedModels: ["qwen2.5:14b", "llama3.1:8b", "llama3.3:70b", "gemma2:27b"],
+  },
+  {
+    id: "llamaindex",
+    label: "LlamaIndex",
+    category: "rag",
+    description: "Data framework for LLM apps. Best-in-class RAG + agents.",
+    docsUrl: "https://docs.llamaindex.ai/",
+    recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "gemma2:27b"],
+  },
+  {
+    id: "openclaw",
+    label: "OpenClaw",
+    category: "graph",
+    description: "Open agent framework for tool use and long-horizon planning.",
+    docsUrl: "https://github.com/openclaw",
+    recommendedModels: ["qwen2.5:72b", "glm-4:32b", "kimi-k2:code", "llama3.3:70b"],
+  },
+  {
+    id: "flowise",
+    label: "Flowise",
+    category: "workflow",
+    description: "Drag-and-drop UI to build LangChain / LlamaIndex flows.",
+    docsUrl: "https://docs.flowiseai.com/",
+    recommendedModels: ["qwen2.5:14b", "llama3.1:8b", "llama3.3:70b", "gemma2:27b"],
+  },
+  {
+    id: "haystack",
+    label: "Haystack",
+    category: "rag",
+    description: "deepset's production-ready RAG + agent pipelines.",
+    docsUrl: "https://docs.haystack.deepset.ai/",
+    recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "gemma2:27b"],
+  },
+  {
+    id: "smolagents",
+    label: "Semantic Kernel / Smolagents",
+    category: "kernel",
+    description: "Lightweight code-first agents (HF Smolagents + MS Semantic Kernel).",
+    docsUrl: "https://huggingface.co/docs/smolagents/",
+    recommendedModels: ["qwen2.5:7b", "qwen2.5:14b", "gemma2:27b", "llama3.1:8b", "qwen2.5-coder:32b"],
+  },
+];
+
