@@ -324,9 +324,10 @@ export function SetupWizard() {
                       : "border-border text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {p.billedByWorkspace ? "★ " : ""}
+                  {p.id === "ollama" ? "★ " : ""}
                   {p.label}
                 </button>
+
               ))}
             </div>
 
