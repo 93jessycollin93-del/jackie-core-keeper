@@ -341,15 +341,26 @@ export function SetupWizard() {
               Open provider dashboard <ExternalLink className="w-3 h-3" />
             </a>
 
-            {provider.id === "lovable" ? (
+            {provider.id === "ollama" ? (
               <div className="flex items-start gap-2 p-3 border border-primary/30 rounded bg-primary/5">
                 <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" />
                 <div className="font-mono text-[11px]">
-                  Built-in and ready. All AI calls in this app route through the Lovable AI Gateway
-                  and are billed to your workspace credits — no external provider account or card
-                  required. Recommended for every deployment.
+                  <strong>Primary provider.</strong> Install Ollama, run <code>ollama serve</code>,
+                  expose it (Cloudflare Tunnel / Tailscale / ngrok), then save the URL as{" "}
+                  <code>OLLAMA_BASE_URL</code>. Optional <code>OLLAMA_API_KEY</code> if your tunnel
+                  is protected. All chats route here first; other providers only fire if Ollama is
+                  unreachable and you have opted into a fallback.
                 </div>
               </div>
+            ) : provider.id === "lovable" ? (
+              <div className="flex items-start gap-2 p-3 border border-border rounded bg-background/50">
+                <CheckCircle2 className="w-4 h-4 text-muted-foreground mt-0.5" />
+                <div className="font-mono text-[11px]">
+                  Built-in fallback. Auto-provisioned and billed to workspace credits. Kicks in
+                  only when Ollama is offline (or if you explicitly select it in the chat picker).
+                </div>
+              </div>
+
             ) : (
               <>
                 <div className="flex items-start gap-2 p-3 border border-yellow-500/40 rounded bg-yellow-500/5">
