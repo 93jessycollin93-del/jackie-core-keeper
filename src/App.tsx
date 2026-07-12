@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { I18nProvider } from "@/game/i18n";
-import { Suspense } from "react";
+import { BottomNav } from "@/components/BottomNav";
 import { BottomNav } from "@/components/BottomNav";
 
 import { IndexFinder } from "@/components/IndexFinder";
