@@ -1,12 +1,18 @@
 import "@/i18n";
+import { lazy, Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { I18nProvider } from "@/game/i18n";
 import { BottomNav } from "@/components/BottomNav";
+import { IndexFinder } from "@/components/IndexFinder";
+import { SandboxBanner } from "@/components/SandboxBanner";
+
+// Core pages
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Tasks from "./pages/Tasks";
@@ -17,11 +23,53 @@ import Pods from "./pages/Pods";
 import Files from "./pages/Files";
 import NotFound from "./pages/NotFound";
 
+// Extended feature pages
+import Sandbox from "./pages/Sandbox";
+import Play from "./pages/Play";
+import TelegramShell from "./pages/TelegramShell";
+import Vault from "./pages/Vault";
+import BotFoundry from "./pages/BotFoundry";
+import BotSwarm from "./pages/BotSwarm";
+import ApiKeyManager from "./pages/ApiKeyManager";
+import SphereCommand from "./pages/SphereCommand";
+import JackieControl from "./pages/JackieControl";
+import VeilOps from "./pages/VeilOps";
+import MarvelsRace from "./pages/MarvelsRace";
+import SentinelDashboard from "./pages/SentinelDashboard";
+import SentinelBoard from "./pages/SentinelBoard";
+import ApexHub from "./pages/ApexHub";
+import AIProviders from "./pages/AIProviders";
+import PodStation from "./pages/PodStation";
+import Design from "./pages/Design";
+
+// Gunit
+import GunitLayout from "./pages/gunit/GunitLayout";
+import GunitDashboard from "./pages/gunit/GunitDashboard";
+import GunitBotFactory from "./pages/gunit/GunitBotFactory";
+import GunitChat from "./pages/gunit/GunitChat";
+import GunitAgents from "./pages/gunit/GunitAgents";
+import GunitUsers from "./pages/gunit/GunitUsers";
+import GunitApiKeys from "./pages/gunit/GunitApiKeys";
+
+const EruRouter = lazy(() => import("./eru/EruRouter"));
+const FloatingEditorNav = lazy(() => import("./eru/FloatingEditorNav"));
+const VisualizerLab = lazy(() => import("./eru/VisualizerLab"));
+
 const queryClient = new QueryClient();
+
+const SandboxCatcher = ({ children }: { children: React.ReactNode }) => {
+  const [params] = useSearchParams();
+  const location = useLocation();
+  useEffect(() => {
+    if (params.get("sandbox") === "true" && location.pathname.startsWith("/sandbox")) {
+      sessionStorage.setItem("sandbox", "true");
+    }
+  }, [params, location.pathname]);
+  return <>{children}</>;
+};
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -29,12 +77,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-
   if (!user) return <Auth />;
   return <>{children}</>;
 };
-
-import { IndexFinder } from "@/components/IndexFinder";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <>
@@ -44,55 +89,73 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
   </>
 );
 
+const P = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute><AppLayout>{children}</AppLayout></ProtectedRoute>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout><Index /></AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/tasks"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout><Tasks /></AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/tasks/board"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout><TaskBoard /></AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/tasks/calendar"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout><TaskCalendar /></AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/agents" element={<ProtectedRoute><AppLayout><Agents /></AppLayout></ProtectedRoute>} />
-              <Route path="/pods" element={<ProtectedRoute><AppLayout><Pods /></AppLayout></ProtectedRoute>} />
-              <Route path="/files" element={<ProtectedRoute><AppLayout><Files /></AppLayout></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <I18nProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <SandboxBanner />
+              <SandboxCatcher>
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/sandbox" element={<Sandbox />} />
+                  <Route path="/hub" element={<TelegramShell />} />
+
+                  {/* Core */}
+                  <Route path="/" element={<P><Index /></P>} />
+                  <Route path="/tasks" element={<P><Tasks /></P>} />
+                  <Route path="/tasks/board" element={<P><TaskBoard /></P>} />
+                  <Route path="/tasks/calendar" element={<P><TaskCalendar /></P>} />
+                  <Route path="/agents" element={<P><Agents /></P>} />
+                  <Route path="/files" element={<P><Files /></P>} />
+                  <Route path="/pods-db" element={<P><Pods /></P>} />
+
+                  {/* Extended */}
+                  <Route path="/play" element={<P><Play /></P>} />
+                  <Route path="/vault" element={<P><Vault /></P>} />
+                  <Route path="/bots" element={<P><BotFoundry /></P>} />
+                  <Route path="/swarm" element={<P><BotSwarm /></P>} />
+                  <Route path="/keys" element={<P><ApiKeyManager /></P>} />
+                  <Route path="/sphere" element={<P><SphereCommand /></P>} />
+                  <Route path="/control" element={<P><JackieControl /></P>} />
+                  <Route path="/veilops" element={<P><VeilOps /></P>} />
+                  <Route path="/marvels" element={<P><MarvelsRace /></P>} />
+                  <Route path="/sentinel" element={<P><SentinelDashboard /></P>} />
+                  <Route path="/sentinel/board" element={<P><SentinelBoard /></P>} />
+                  <Route path="/apex" element={<P><ApexHub /></P>} />
+                  <Route path="/providers" element={<P><AIProviders /></P>} />
+                  <Route path="/pods" element={<P><PodStation /></P>} />
+                  <Route path="/design" element={<P><Design /></P>} />
+
+                  {/* Gunit */}
+                  <Route path="/gunit" element={<ProtectedRoute><GunitLayout /></ProtectedRoute>}>
+                    <Route index element={<GunitDashboard />} />
+                    <Route path="bots" element={<GunitBotFactory />} />
+                    <Route path="chat" element={<GunitChat />} />
+                    <Route path="agents" element={<GunitAgents />} />
+                    <Route path="users" element={<GunitUsers />} />
+                    <Route path="keys" element={<GunitApiKeys />} />
+                  </Route>
+
+                  {/* Eru */}
+                  <Route path="/eru/visualizers" element={<ProtectedRoute><Suspense fallback={null}><VisualizerLab /></Suspense></ProtectedRoute>} />
+                  <Route path="/eru/*" element={<ProtectedRoute><Suspense fallback={null}><EruRouter /></Suspense></ProtectedRoute>} />
+
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Suspense fallback={null}><FloatingEditorNav /></Suspense>
+              </SandboxCatcher>
+            </BrowserRouter>
+          </TooltipProvider>
+        </I18nProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
