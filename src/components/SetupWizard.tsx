@@ -347,8 +347,8 @@ export function SetupWizard() {
                   </div>
                 </div>
 
-              <>
                 <div className="space-y-1">
+
                   <Label htmlFor="rawKey" className="font-mono text-xs">
                     Paste key to validate
                   </Label>
