@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => ({
         icons: [{ src: "/placeholder.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api/, /^\/functions/],
         runtimeCaching: [
