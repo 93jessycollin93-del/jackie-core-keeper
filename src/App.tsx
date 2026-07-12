@@ -118,6 +118,8 @@ const App = () => (
                 <Route path="/apex" element={<P><ApexHub /></P>} />
                 <Route path="/providers" element={<P><AIProviders /></P>} />
                 <Route path="/design" element={<P><Design /></P>} />
+                <Route path="/setup" element={<P><Setup /></P>} />
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
