@@ -10,8 +10,8 @@ export type ChatPreset = {
 };
 
 const DEFAULT: ChatPreset = {
-  provider: "lovable",
-  model: "google/gemini-2.5-pro",
+  provider: "ollama",
+  model: "llama3.2:3b",
 };
 
 export function getChatPreset(): ChatPreset {
