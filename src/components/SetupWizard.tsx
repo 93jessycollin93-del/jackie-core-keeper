@@ -28,55 +28,64 @@ type Provider = {
   minLen: number;
   docs: string;
   hint: string;
+  /** true = billed to workspace credits (built-in). false = user pays the provider directly. */
+  billedByWorkspace: boolean;
 };
 
 const PROVIDERS: Provider[] = [
   {
     id: "lovable",
-    label: "Lovable AI Gateway",
+    label: "Lovable AI Gateway (built-in)",
     secretName: "LOVABLE_API_KEY",
     keyPrefix: "",
     minLen: 0,
     docs: "https://docs.lovable.dev/features/ai",
-    hint: "Auto-provisioned. No action needed unless it was rotated.",
+    hint:
+      "Auto-provisioned. Routes to Gemini, GPT-5, Claude and more through your workspace credits — no third-party billing.",
+    billedByWorkspace: true,
   },
   {
     id: "openai",
-    label: "OpenAI",
+    label: "OpenAI (bring your own — you pay OpenAI)",
     secretName: "OPENAI_API_KEY",
     keyPrefix: "sk-",
     minLen: 40,
     docs: "https://platform.openai.com/api-keys",
-    hint: "Starts with sk- or sk-proj-. Create at platform.openai.com/api-keys.",
+    hint: "Optional. Only add if you specifically want to be billed by OpenAI instead of using the built-in gateway.",
+    billedByWorkspace: false,
   },
   {
     id: "anthropic",
-    label: "Anthropic (Claude)",
+    label: "Anthropic (bring your own — you pay Anthropic)",
     secretName: "ANTHROPIC_API_KEY",
     keyPrefix: "sk-ant-",
     minLen: 40,
     docs: "https://console.anthropic.com/settings/keys",
-    hint: "Starts with sk-ant-. Create at console.anthropic.com.",
+    hint: "Optional. Only add if you want to be billed by Anthropic directly.",
+    billedByWorkspace: false,
   },
   {
     id: "groq",
-    label: "Groq",
+    label: "Groq (bring your own — you pay Groq)",
     secretName: "GROQ_API_KEY",
     keyPrefix: "gsk_",
     minLen: 30,
     docs: "https://console.groq.com/keys",
-    hint: "Starts with gsk_. Create at console.groq.com/keys.",
+    hint: "Optional. Only add if you want to be billed by Groq directly.",
+    billedByWorkspace: false,
   },
   {
     id: "openrouter",
-    label: "OpenRouter",
+    label: "OpenRouter (bring your own — you pay OpenRouter)",
     secretName: "OPENROUTER_API_KEY",
     keyPrefix: "sk-or-",
     minLen: 30,
     docs: "https://openrouter.ai/keys",
-    hint: "Starts with sk-or-. Create at openrouter.ai/keys.",
+    hint: "Optional. Only add if you want to be billed by OpenRouter directly.",
+    billedByWorkspace: false,
   },
 ];
+
 
 type ValidationState = { ok: boolean; msg: string };
 
