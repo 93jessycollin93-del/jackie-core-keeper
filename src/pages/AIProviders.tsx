@@ -187,6 +187,52 @@ export default function AIProviders() {
           </div>
         </Card>
 
+        {/* Agent frameworks */}
+        <Card className="p-4 md:p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Network className="w-4 h-4 text-primary" />
+            <h2 className="font-semibold">Agent Frameworks</h2>
+            <Badge variant="secondary" className="text-[10px]">local · Ollama-first</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Wire Jackie into any of these frameworks. All recommended models run locally via Ollama —
+            click a model to load it into the tester above.
+          </p>
+          <div className="grid md:grid-cols-2 gap-3">
+            {FRAMEWORKS.map((f) => {
+              const Icon = FRAMEWORK_ICONS[f.category];
+              return (
+                <div key={f.id} className="rounded-lg border border-border p-3 hover:border-primary/40 transition">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-3.5 h-3.5 text-primary" />
+                      <span className="font-mono text-sm font-semibold">{f.label}</span>
+                    </div>
+                    <a href={f.docsUrl} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline flex items-center gap-1">
+                      docs <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mb-2">{f.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {f.recommendedModels.map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => { switchProvider("ollama"); setModelId(m); }}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-primary/20 text-primary font-mono transition"
+                        title="Load into Ollama tester"
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+
+
         {/* Secrets info */}
         <Card className="p-4 md:p-6 border-amber-500/30 bg-amber-500/5">
           <div className="flex items-start gap-3">
