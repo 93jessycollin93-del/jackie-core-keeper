@@ -181,7 +181,7 @@ export function SetupWizard() {
   const canNext =
     (step === 0 && !!user) ||
     (step === 1 && rlsSummary?.ok === true) ||
-    (step === 2 && (providerId === "lovable" || validation?.ok === true)) ||
+    (step === 2 && (providerId === "ollama" || providerId === "lovable" || validation?.ok === true)) ||
     step === 3;
 
   return (
