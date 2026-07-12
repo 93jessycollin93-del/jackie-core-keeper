@@ -34,54 +34,65 @@ type Provider = {
 
 const PROVIDERS: Provider[] = [
   {
+    id: "ollama",
+    label: "Ollama (self-hosted — your choice, $0)",
+    secretName: "OLLAMA_BASE_URL",
+    keyPrefix: "",
+    minLen: 0,
+    docs: "https://ollama.com/download",
+    hint:
+      "Your own GPU/laptop/server. 100% private, offline-capable, no per-token cost. Paste your tunnel URL (e.g. https://ollama.mydomain.com) into OLLAMA_BASE_URL. This is the primary provider — everything else is a fallback.",
+    billedByWorkspace: false,
+  },
+  {
     id: "lovable",
-    label: "Lovable AI Gateway (built-in)",
+    label: "Lovable AI Gateway (fallback, built-in)",
     secretName: "LOVABLE_API_KEY",
     keyPrefix: "",
     minLen: 0,
     docs: "https://docs.lovable.dev/features/ai",
     hint:
-      "Auto-provisioned. Routes to Gemini, GPT-5, Claude and more through your workspace credits — no third-party billing.",
+      "Auto-provisioned fallback when Ollama is offline. Routes to Gemini/GPT/Claude via workspace credits.",
     billedByWorkspace: true,
   },
   {
-    id: "openai",
-    label: "OpenAI (bring your own — you pay OpenAI)",
-    secretName: "OPENAI_API_KEY",
-    keyPrefix: "sk-",
-    minLen: 40,
-    docs: "https://platform.openai.com/api-keys",
-    hint: "Optional. Only add if you specifically want to be billed by OpenAI instead of using the built-in gateway.",
-    billedByWorkspace: false,
-  },
-  {
-    id: "anthropic",
-    label: "Anthropic (bring your own — you pay Anthropic)",
-    secretName: "ANTHROPIC_API_KEY",
-    keyPrefix: "sk-ant-",
-    minLen: 40,
-    docs: "https://console.anthropic.com/settings/keys",
-    hint: "Optional. Only add if you want to be billed by Anthropic directly.",
-    billedByWorkspace: false,
-  },
-  {
     id: "groq",
-    label: "Groq (bring your own — you pay Groq)",
+    label: "Groq (fallback — you pay Groq)",
     secretName: "GROQ_API_KEY",
     keyPrefix: "gsk_",
     minLen: 30,
     docs: "https://console.groq.com/keys",
-    hint: "Optional. Only add if you want to be billed by Groq directly.",
+    hint: "Optional. Free tier available. Billed by Groq directly.",
     billedByWorkspace: false,
   },
   {
     id: "openrouter",
-    label: "OpenRouter (bring your own — you pay OpenRouter)",
+    label: "OpenRouter (fallback — you pay OpenRouter)",
     secretName: "OPENROUTER_API_KEY",
     keyPrefix: "sk-or-",
     minLen: 30,
     docs: "https://openrouter.ai/keys",
-    hint: "Optional. Only add if you want to be billed by OpenRouter directly.",
+    hint: "Optional. Hundreds of models, free tier available. Billed by OpenRouter directly.",
+    billedByWorkspace: false,
+  },
+  {
+    id: "openai",
+    label: "OpenAI (fallback — you pay OpenAI)",
+    secretName: "OPENAI_API_KEY",
+    keyPrefix: "sk-",
+    minLen: 40,
+    docs: "https://platform.openai.com/api-keys",
+    hint: "Optional. Billed by OpenAI directly.",
+    billedByWorkspace: false,
+  },
+  {
+    id: "anthropic",
+    label: "Anthropic (fallback — you pay Anthropic)",
+    secretName: "ANTHROPIC_API_KEY",
+    keyPrefix: "sk-ant-",
+    minLen: 40,
+    docs: "https://console.anthropic.com/settings/keys",
+    hint: "Optional. Billed by Anthropic directly.",
     billedByWorkspace: false,
   },
 ];
@@ -125,7 +136,7 @@ export function SetupWizard() {
   };
 
   // Step 2 — provider
-  const [providerId, setProviderId] = useState<string>("openai");
+  const [providerId, setProviderId] = useState<string>("ollama");
   const provider = useMemo(() => PROVIDERS.find((p) => p.id === providerId)!, [providerId]);
   const [rawKey, setRawKey] = useState("");
   const validation = useMemo(
@@ -170,7 +181,7 @@ export function SetupWizard() {
   const canNext =
     (step === 0 && !!user) ||
     (step === 1 && rlsSummary?.ok === true) ||
-    (step === 2 && (providerId === "lovable" || validation?.ok === true)) ||
+    (step === 2 && (providerId === "ollama" || providerId === "lovable" || validation?.ok === true)) ||
     step === 3;
 
   return (
@@ -291,10 +302,12 @@ export function SetupWizard() {
           <div className="space-y-3">
             <h3 className="font-mono text-sm">Provider credentials</h3>
             <p className="font-mono text-[11px] text-muted-foreground">
-              The built-in Lovable AI Gateway covers chat, embeddings, images, and speech through
-              your workspace credits. You do not need to bring any third-party key — the other
-              options here would bill <em>you</em> at the provider, not through Lovable.
+              <strong>Ollama is your primary provider</strong> — self-hosted, offline-capable, zero
+              per-token cost. Everything else is a fallback you choose. Order below reflects
+              priority; the built-in gateway sits second so the app still works when your local
+              node is unreachable.
             </p>
+
             <div className="flex flex-wrap gap-2">
               {PROVIDERS.map((p) => (
                 <button
@@ -311,9 +324,10 @@ export function SetupWizard() {
                       : "border-border text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {p.billedByWorkspace ? "★ " : ""}
+                  {p.id === "ollama" ? "★ " : ""}
                   {p.label}
                 </button>
+
               ))}
             </div>
 
@@ -327,15 +341,26 @@ export function SetupWizard() {
               Open provider dashboard <ExternalLink className="w-3 h-3" />
             </a>
 
-            {provider.id === "lovable" ? (
+            {provider.id === "ollama" ? (
               <div className="flex items-start gap-2 p-3 border border-primary/30 rounded bg-primary/5">
                 <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" />
                 <div className="font-mono text-[11px]">
-                  Built-in and ready. All AI calls in this app route through the Lovable AI Gateway
-                  and are billed to your workspace credits — no external provider account or card
-                  required. Recommended for every deployment.
+                  <strong>Primary provider.</strong> Install Ollama, run <code>ollama serve</code>,
+                  expose it (Cloudflare Tunnel / Tailscale / ngrok), then save the URL as{" "}
+                  <code>OLLAMA_BASE_URL</code>. Optional <code>OLLAMA_API_KEY</code> if your tunnel
+                  is protected. All chats route here first; other providers only fire if Ollama is
+                  unreachable and you have opted into a fallback.
                 </div>
               </div>
+            ) : provider.id === "lovable" ? (
+              <div className="flex items-start gap-2 p-3 border border-border rounded bg-background/50">
+                <CheckCircle2 className="w-4 h-4 text-muted-foreground mt-0.5" />
+                <div className="font-mono text-[11px]">
+                  Built-in fallback. Auto-provisioned and billed to workspace credits. Kicks in
+                  only when Ollama is offline (or if you explicitly select it in the chat picker).
+                </div>
+              </div>
+
             ) : (
               <>
                 <div className="flex items-start gap-2 p-3 border border-yellow-500/40 rounded bg-yellow-500/5">

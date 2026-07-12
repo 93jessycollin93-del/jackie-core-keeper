@@ -26,11 +26,37 @@ export interface ProviderDef {
 
 export const PROVIDERS: ProviderDef[] = [
   {
+    id: "ollama",
+    label: "Ollama (self-hosted — PRIMARY)",
+    fn: "jackie-ollama",
+    requiresSecret: "OLLAMA_BASE_URL",
+    helpUrl: "https://ollama.com/download",
+    free: true,
+    description: "Your GPU/laptop/server. Offline-capable, 100% private, $0/token. This is the default — everything else is a fallback.",
+    models: [
+      { id: "llama3.3:70b", label: "Llama 3.3 70B", free: true, note: "Best general (~40GB VRAM)" },
+      { id: "llama3.2:3b", label: "Llama 3.2 3B", free: true, note: "Runs on laptop" },
+      { id: "llama3.2:1b", label: "Llama 3.2 1B", free: true, note: "Runs on phone" },
+      { id: "llama3.2-vision:11b", label: "Llama 3.2 Vision 11B", free: true, vision: true },
+      { id: "qwen2.5-coder:32b", label: "Qwen 2.5 Coder 32B", free: true, note: "Best local coder" },
+      { id: "deepseek-coder-v2:16b", label: "DeepSeek Coder V2 16B", free: true, note: "Fast coder" },
+      { id: "deepseek-r1:32b", label: "DeepSeek R1 32B", free: true, reasoning: true },
+      { id: "codellama:34b", label: "CodeLlama 34B", free: true },
+      { id: "codellama:13b", label: "CodeLlama 13B", free: true },
+      { id: "codellama:7b", label: "CodeLlama 7B", free: true },
+      { id: "gemma2:9b", label: "Gemma 2 9B", free: true },
+      { id: "mistral:7b", label: "Mistral 7B", free: true },
+      { id: "phi3:mini", label: "Phi-3 Mini", free: true },
+      { id: "starcoder2:15b", label: "StarCoder2 15B", free: true },
+    ],
+  },
+  {
     id: "lovable",
-    label: "Lovable AI Gateway",
+    label: "Lovable AI Gateway (fallback)",
     fn: "jackie-chat",
     free: true,
-    description: "Zero-config gateway (Gemini + GPT). Uses your workspace credits.",
+    description: "Built-in fallback when Ollama is unreachable. Uses workspace credits.",
+
     models: [
       { id: "google/gemini-3-flash-preview", label: "Gemini 3 Flash", free: true, vision: true },
       { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro", vision: true, reasoning: true },
@@ -92,32 +118,8 @@ export const PROVIDERS: ProviderDef[] = [
       { id: "microsoft/phi-3-mini-128k-instruct:free", label: "Phi-3 Mini 128k", free: true },
     ],
   },
-  {
-    id: "ollama",
-    label: "Ollama (self-hosted)",
-    fn: "jackie-ollama",
-    requiresSecret: "OLLAMA_BASE_URL",
-    helpUrl: "https://ollama.com/download",
-    free: true,
-    description: "Your own GPU/laptop. Expose via Cloudflare Tunnel and paste the URL. 100% private.",
-    models: [
-      { id: "llama3.3:70b", label: "Llama 3.3 70B", free: true, note: "Best general (~40GB VRAM)" },
-      { id: "llama3.2:3b", label: "Llama 3.2 3B", free: true, note: "Runs on laptop" },
-      { id: "llama3.2:1b", label: "Llama 3.2 1B", free: true, note: "Runs on phone" },
-      { id: "llama3.2-vision:11b", label: "Llama 3.2 Vision 11B", free: true, vision: true },
-      { id: "qwen2.5-coder:32b", label: "Qwen 2.5 Coder 32B", free: true, note: "Best local coder" },
-      { id: "deepseek-coder-v2:16b", label: "DeepSeek Coder V2 16B", free: true, note: "Fast coder" },
-      { id: "deepseek-r1:32b", label: "DeepSeek R1 32B", free: true, reasoning: true },
-      { id: "codellama:34b", label: "CodeLlama 34B", free: true },
-      { id: "codellama:13b", label: "CodeLlama 13B", free: true },
-      { id: "codellama:7b", label: "CodeLlama 7B", free: true },
-      { id: "gemma2:9b", label: "Gemma 2 9B", free: true },
-      { id: "mistral:7b", label: "Mistral 7B", free: true },
-      { id: "phi3:mini", label: "Phi-3 Mini", free: true },
-      { id: "starcoder2:15b", label: "StarCoder2 15B", free: true },
-    ],
-  },
 ];
+
 
 export function findProvider(id: ProviderId): ProviderDef | undefined {
   return PROVIDERS.find((p) => p.id === id);
