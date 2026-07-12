@@ -7,8 +7,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { I18nProvider } from "@/game/i18n";
-import { lazy, Suspense } from "react";
 import { BottomNav } from "@/components/BottomNav";
+
+
 import { IndexFinder } from "@/components/IndexFinder";
 
 import Index from "./pages/Index";
@@ -44,9 +45,7 @@ import PodStation from "./pages/PodStation";
 import Design from "./pages/Design";
 import NotFound from "./pages/NotFound";
 
-const EruRouter = lazy(() => import("./eru/EruRouter"));
-const FloatingEditorNav = lazy(() => import("./eru/FloatingEditorNav"));
-const VisualizerLab = lazy(() => import("./eru/VisualizerLab"));
+
 
 const queryClient = new QueryClient();
 
@@ -117,18 +116,10 @@ const App = () => (
                 <Route path="/apex" element={<P><ApexHub /></P>} />
                 <Route path="/providers" element={<P><AIProviders /></P>} />
                 <Route path="/design" element={<P><Design /></P>} />
-                <Route
-                  path="/eru/visualizers"
-                  element={<ProtectedRoute><Suspense fallback={null}><VisualizerLab /></Suspense></ProtectedRoute>}
-                />
-                <Route
-                  path="/eru/*"
-                  element={<ProtectedRoute><Suspense fallback={null}><EruRouter /></Suspense></ProtectedRoute>}
-                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <Suspense fallback={null}><FloatingEditorNav /></Suspense>
             </BrowserRouter>
+
           </TooltipProvider>
         </I18nProvider>
       </AuthProvider>
