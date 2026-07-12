@@ -290,6 +290,11 @@ export function SetupWizard() {
         {step === 2 && (
           <div className="space-y-3">
             <h3 className="font-mono text-sm">Provider credentials</h3>
+            <p className="font-mono text-[11px] text-muted-foreground">
+              The built-in Lovable AI Gateway covers chat, embeddings, images, and speech through
+              your workspace credits. You do not need to bring any third-party key — the other
+              options here would bill <em>you</em> at the provider, not through Lovable.
+            </p>
             <div className="flex flex-wrap gap-2">
               {PROVIDERS.map((p) => (
                 <button
@@ -301,9 +306,12 @@ export function SetupWizard() {
                   className={`px-3 py-1.5 rounded font-mono text-xs border ${
                     providerId === p.id
                       ? "border-primary text-primary bg-primary/10"
+                      : p.billedByWorkspace
+                      ? "border-border text-foreground hover:text-primary"
                       : "border-border text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  {p.billedByWorkspace ? "★ " : ""}
                   {p.label}
                 </button>
               ))}
@@ -323,10 +331,22 @@ export function SetupWizard() {
               <div className="flex items-start gap-2 p-3 border border-primary/30 rounded bg-primary/5">
                 <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" />
                 <div className="font-mono text-[11px]">
-                  Lovable AI Gateway is auto-provisioned. Nothing to enter here.
+                  Built-in and ready. All AI calls in this app route through the Lovable AI Gateway
+                  and are billed to your workspace credits — no external provider account or card
+                  required. Recommended for every deployment.
                 </div>
               </div>
             ) : (
+              <>
+                <div className="flex items-start gap-2 p-3 border border-yellow-500/40 rounded bg-yellow-500/5">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5" />
+                  <div className="font-mono text-[11px]">
+                    Optional bring-your-own-key. Every call using this key is billed by{" "}
+                    <strong>{provider.label.split(" ")[0]}</strong> on the account tied to the key
+                    — not through Lovable. Skip this step unless you specifically want that.
+                  </div>
+                </div>
+
               <>
                 <div className="space-y-1">
                   <Label htmlFor="rawKey" className="font-mono text-xs">
