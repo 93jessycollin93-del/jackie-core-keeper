@@ -13,7 +13,6 @@ import { BottomNav } from "@/components/BottomNav";
 import { IndexFinder } from "@/components/IndexFinder";
 
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
 import Tasks from "./pages/Tasks";
 import TaskBoard from "./pages/TaskBoard";
 import TaskCalendar from "./pages/TaskCalendar";
@@ -60,7 +59,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  if (!user) return <Auth />;
   return <>{children}</>;
 };
 
@@ -86,7 +84,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth" element={<P><Index /></P>} />
                 <Route path="/" element={<P><Index /></P>} />
                 <Route path="/tasks" element={<P><Tasks /></P>} />
                 <Route path="/tasks/board" element={<P><TaskBoard /></P>} />
