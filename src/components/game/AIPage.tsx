@@ -77,9 +77,8 @@ export default function AIPage() {
     setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
     await streamChat({
-      messages: newMessages,
+      messages: [{ role: 'system', content: `${ORACLE_SYSTEM_CONTEXT}\n\n${gameSummary}` }, ...newMessages],
       model: 'google/gemini-2.5-flash',
-      context: `${ORACLE_SYSTEM_CONTEXT}\n\n${gameSummary}`,
       onDelta: (chunk) => {
         assistantText += chunk;
         setMessages(prev => {
