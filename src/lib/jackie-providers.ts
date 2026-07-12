@@ -178,7 +178,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "graph",
     description: "Stateful, graph-based agent orchestration. Best for complex branching workflows.",
     docsUrl: "https://langchain-ai.github.io/langgraph/",
-    recommendedModels: ["qwen2.5:32b", "qwen2.5-coder:32b", "llama3.3:70b", "gemma2:27b", "glm-4:32b"],
+    recommendedModels: ["qwen2.5:32b", "qwen2.5-coder:32b", "llama3.3:70b", "gemma2:27b", "deepseek-r1:32b"],
   },
   {
     id: "crewai",
@@ -186,7 +186,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "crew",
     description: "Role-playing autonomous AI agents that collaborate as a crew.",
     docsUrl: "https://docs.crewai.com/",
-    recommendedModels: ["qwen2.5:14b", "qwen2.5:32b", "llama3.3:70b", "gemma2:27b", "kimi-k2:code"],
+    recommendedModels: ["qwen2.5:14b", "qwen2.5:32b", "llama3.3:70b", "gemma2:27b", "qwen2.5-coder:32b"],
   },
   {
     id: "dify",
@@ -194,7 +194,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "workflow",
     description: "Open-source LLMOps platform. Visual workflow + RAG + agents.",
     docsUrl: "https://docs.dify.ai/",
-    recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "glm-4:32b", "gemma2:27b"],
+    recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "mixtral:8x7b", "gemma2:27b"],
   },
   {
     id: "autogen",
@@ -202,7 +202,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "crew",
     description: "Microsoft's multi-agent conversation framework.",
     docsUrl: "https://microsoft.github.io/autogen/",
-    recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "glm-4:32b", "minimax-m2:7b"],
+    recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "mixtral:8x7b", "deepseek-r1:32b"],
   },
   {
     id: "n8n",
@@ -224,9 +224,9 @@ export const FRAMEWORKS: FrameworkDef[] = [
     id: "openclaw",
     label: "OpenClaw",
     category: "graph",
-    description: "Open agent framework for tool use and long-horizon planning.",
-    docsUrl: "https://github.com/openclaw",
-    recommendedModels: ["qwen2.5:72b", "glm-4:32b", "kimi-k2:code", "llama3.3:70b"],
+    description: "User-requested framework — verify docs URL before wiring. No official Ollama-tagged models yet.",
+    docsUrl: "https://github.com/search?q=openclaw+agent&type=repositories",
+    recommendedModels: ["qwen2.5:72b", "llama3.3:70b", "qwen2.5-coder:32b", "deepseek-r1:32b"],
   },
   {
     id: "flowise",
@@ -253,4 +253,5 @@ export const FRAMEWORKS: FrameworkDef[] = [
     recommendedModels: ["qwen2.5:7b", "qwen2.5:14b", "gemma2:27b", "llama3.1:8b", "qwen2.5-coder:32b"],
   },
 ];
+
 
