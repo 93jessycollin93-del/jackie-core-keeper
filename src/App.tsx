@@ -43,7 +43,9 @@ import ApexHub from "./pages/ApexHub";
 import AIProviders from "./pages/AIProviders";
 import PodStation from "./pages/PodStation";
 import Design from "./pages/Design";
+import Setup from "./pages/Setup";
 import NotFound from "./pages/NotFound";
+
 
 
 
@@ -116,6 +118,8 @@ const App = () => (
                 <Route path="/apex" element={<P><ApexHub /></P>} />
                 <Route path="/providers" element={<P><AIProviders /></P>} />
                 <Route path="/design" element={<P><Design /></P>} />
+                <Route path="/setup" element={<P><Setup /></P>} />
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
