@@ -59,7 +59,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  if (!user) return <Auth />;
   return <>{children}</>;
 };
 
