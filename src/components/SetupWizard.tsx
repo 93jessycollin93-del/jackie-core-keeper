@@ -302,10 +302,12 @@ export function SetupWizard() {
           <div className="space-y-3">
             <h3 className="font-mono text-sm">Provider credentials</h3>
             <p className="font-mono text-[11px] text-muted-foreground">
-              The built-in Lovable AI Gateway covers chat, embeddings, images, and speech through
-              your workspace credits. You do not need to bring any third-party key — the other
-              options here would bill <em>you</em> at the provider, not through Lovable.
+              <strong>Ollama is your primary provider</strong> — self-hosted, offline-capable, zero
+              per-token cost. Everything else is a fallback you choose. Order below reflects
+              priority; the built-in gateway sits second so the app still works when your local
+              node is unreachable.
             </p>
+
             <div className="flex flex-wrap gap-2">
               {PROVIDERS.map((p) => (
                 <button
