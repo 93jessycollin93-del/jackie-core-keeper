@@ -21,7 +21,7 @@ async function uid(): Promise<string | null> {
 export async function pushAuditRemote(entry: AuditEntry): Promise<void> {
   const user_id = await uid();
   if (!user_id) return;
-  await (supabase as any).from("jackie_control_audit").insert({
+  await supabase.from("jackie_control_audit").insert({
     user_id,
     ts: new Date(entry.ts).toISOString(),
     actor: entry.actor,
@@ -57,14 +57,14 @@ export async function fetchAuditRemote(limit = 200): Promise<AuditEntry[]> {
 export async function clearAuditRemote(): Promise<void> {
   const user_id = await uid();
   if (!user_id) return;
-  await (supabase as any).from("jackie_control_audit").delete().eq("user_id", user_id);
+  await supabase.from("jackie_control_audit").delete().eq("user_id", user_id);
 }
 
 // ── Swarms ───────────────────────────────────────────────────────────
 export async function createSwarmRemote(s: RemoteSwarm): Promise<void> {
   const user_id = await uid();
   if (!user_id) return;
-  await (supabase as any).from("jackie_control_swarms").insert({
+  await supabase.from("jackie_control_swarms").insert({
     id: s.id,
     user_id,
     goal: s.goal,
@@ -85,7 +85,7 @@ export async function updateSwarmRemote(
   if (patch.status) update.status = patch.status;
   if (patch.results) update.results = patch.results;
   if (Object.keys(update).length === 0) return;
-  await (supabase as any).from("jackie_control_swarms").update(update).eq("id", id).eq("user_id", user_id);
+  await supabase.from("jackie_control_swarms").update(update).eq("id", id).eq("user_id", user_id);
 }
 
 export async function fetchSwarmsRemote(limit = 50): Promise<RemoteSwarm[]> {
@@ -127,7 +127,7 @@ export async function fetchPrefsRemote(): Promise<{ role: Role; modelOverride: s
 export async function savePrefsRemote(p: { role: Role; modelOverride: string | null }): Promise<void> {
   const user_id = await uid();
   if (!user_id) return;
-  await (supabase as any).from("jackie_control_prefs").upsert({
+  await supabase.from("jackie_control_prefs").upsert({
     user_id,
     role: p.role,
     model_override: p.modelOverride,

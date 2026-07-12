@@ -21,9 +21,9 @@ export default function GunitDashboard() {
     if (!user) return;
 
     const [botsRes, agentsRes, improvRes] = await Promise.all([
-      (supabase as any).from("gunit_bots").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      (supabase as any).from("gunit_agents").select("id, status").eq("user_id", user.id),
-      (supabase as any).from("gunit_improvements").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+      supabase.from("gunit_bots").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("gunit_agents").select("id, status").eq("user_id", user.id),
+      supabase.from("gunit_improvements").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
     ]);
 
     const agents = agentsRes.data || [];

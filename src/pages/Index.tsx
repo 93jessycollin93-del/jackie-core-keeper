@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { streamChat, JACKIE_MODELS, type ChatMessage, type JackieModelId } from "@/lib/jackie-stream";
 import {
   listConversations,
@@ -13,6 +14,8 @@ import {
   getConversationModel,
   type Conversation,
 } from "@/lib/jackie-db";
+import { getChatPreset, setChatPreset } from "@/lib/jackie-preset";
+import { downloadArchive, importArchive } from "@/lib/jackie-archive";
 import {
   uploadAttachment,
   getMessageAttachments,
@@ -26,14 +29,8 @@ import { ChatMediaBar, type PendingFile } from "@/components/ChatMediaBar";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { AttachmentDisplay } from "@/components/AttachmentDisplay";
 import { toast } from "sonner";
-import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle, ListTodo, Columns3, CalendarDays, Cpu, Settings, FolderTree } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { LanguageSelector } from "@/components/LanguageSelector";
-import { processTaskCommand } from "@/lib/task-commands";
-import { callHydraCoder, type HydraResponse } from "@/lib/hydra-client";
-import { HydraMeta } from "@/components/HydraMeta";
-import { HydraSettings } from "@/components/HydraSettings";
+import { getGameStateContext } from "@/lib/game-state-context";
+import { Plus, Trash2, MessageSquare, LogOut, Send, Menu, X, Sun, Moon, Volume2, VolumeX, Download, Mic, ChevronDown, Zap, DollarSign, Search, Tag, XCircle, Pin, Upload, Archive as ArchiveIcon } from "lucide-react";
 import {
   listTags,
   createTag,
@@ -45,6 +42,34 @@ import {
   TAG_COLORS,
   type Tag as TagType,
 } from "@/lib/jackie-tags";
+import {
+  buildMemoryContext,
+  upsertMemory,
+  extractMemoryCandidates,
+  getMemories,
+  deleteMemory,
+  searchMemories,
+} from "@/lib/jackie-memory";
+import {
+  buildTaskContext,
+  createTask,
+  getTasks,
+  updateTask,
+  completeTask,
+  deleteTask,
+  getTaskStats,
+} from "@/lib/jackie-tasks";
+import {
+  buildFileContext,
+  generateImage,
+  listFiles,
+  searchFiles,
+} from "@/lib/jackie-files";
+import AnimatedCanvas from "@/components/backgrounds/AnimatedCanvas";
+import NeutronBackgroundSettings, { loadNeutronSettings, type NeutronBackgroundSettings as NSSettings } from "@/components/backgrounds/NeutronBackgroundSettings";
+import { DraggableToolbar } from "@/components/DraggableToolbar";
+import { ScrollNav } from "@/components/ScrollNav";
+
 
 interface DisplayMessage {
   id: string;
@@ -54,7 +79,6 @@ interface DisplayMessage {
   memoryTier?: 1 | 2 | 3;
   securityFlag?: string | null;
   attachments?: Attachment[];
-  hydra?: HydraResponse;
 }
 
 // ─── Sidebar ───────────────────────────────────────────────
@@ -79,6 +103,8 @@ const Sidebar = ({
   onCreateTag,
   onDeleteTag,
   onToggleTag,
+  onExportArchive,
+  onImportArchive,
 }: {
   conversations: Conversation[];
   activeId: string | null;
@@ -99,8 +125,9 @@ const Sidebar = ({
   onCreateTag: (name: string, color: string) => void;
   onDeleteTag: (id: string) => void;
   onToggleTag: (convId: string, tagId: string, has: boolean) => void;
+  onExportArchive: () => void;
+  onImportArchive: (file: File) => void;
 }) => {
-  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewTag, setShowNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
@@ -134,7 +161,7 @@ const Sidebar = ({
       )}
       <aside
         className={`
-          w-[280px] min-h-screen border-r border-border bg-sidebar flex-col
+          w-[280px] h-screen border-r border-border bg-sidebar flex-col
           hidden md:flex
           ${isMobileOpen ? "!flex fixed inset-y-0 left-0 z-50" : ""}
         `}
@@ -151,14 +178,14 @@ const Sidebar = ({
               <button
                 onClick={onNew}
                 className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors duration-150"
-                title={t("app.newConversation")}
+                title="New conversation"
               >
                 <Plus size={14} />
               </button>
               <button
                 onClick={onToggleTheme}
                 className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors duration-150"
-                title={t("app.switchTheme")}
+                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               >
                 {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
               </button>
@@ -179,7 +206,7 @@ const Sidebar = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("app.searchConversations")}
+              placeholder="Search conversations…"
               className="w-full pl-7 pr-2 py-1.5 rounded-sm bg-secondary/50 border border-border font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
           </div>
@@ -187,16 +214,26 @@ const Sidebar = ({
           {tags.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {tags.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => onSetTagFilter(activeTagFilter === t.id ? null : t.id)}
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border transition-all ${
-                    TAG_COLOR_MAP[t.color] || TAG_COLOR_MAP.blue
-                  } ${activeTagFilter === t.id ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"}`}
-                >
-                  {t.name}
-                  {activeTagFilter === t.id && <X size={8} />}
-                </button>
+                <div key={t.id} className="group/tag inline-flex items-center gap-0.5">
+                  <button
+                    onClick={() => onSetTagFilter(activeTagFilter === t.id ? null : t.id)}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-l-sm font-mono text-[10px] border border-r-0 transition-all ${
+                      TAG_COLOR_MAP[t.color] || TAG_COLOR_MAP.blue
+                    } ${activeTagFilter === t.id ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"}`}
+                  >
+                    {t.name}
+                    {activeTagFilter === t.id && <X size={8} />}
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteTag(t.id); }}
+                    className={`px-0.5 py-0.5 rounded-r-sm font-mono text-[10px] border transition-all opacity-0 group-hover/tag:opacity-100 hover:!text-destructive ${
+                      TAG_COLOR_MAP[t.color] || TAG_COLOR_MAP.blue
+                    }`}
+                    title={`Delete "${t.name}" tag`}
+                  >
+                    <Trash2 size={8} />
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -204,11 +241,11 @@ const Sidebar = ({
 
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground flex items-center justify-between">
-            <span>{t("app.conversations")} {(searchQuery || activeTagFilter) && `(${filtered.length})`}</span>
+            <span>Conversations {(searchQuery || activeTagFilter) && `(${filtered.length})`}</span>
           </div>
           {filtered.length === 0 && (
             <div className="px-2 py-2 text-xs text-muted-foreground">
-              {searchQuery || activeTagFilter ? t("app.noMatches") : t("app.noConversations")}
+              {searchQuery || activeTagFilter ? "No matches found." : "No conversations yet."}
             </div>
           )}
           {filtered.map((conv) => {
@@ -233,7 +270,7 @@ const Sidebar = ({
                   <button
                     onClick={(e) => { e.stopPropagation(); setTagMenuConvId(tagMenuConvId === conv.id ? null : conv.id); }}
                     className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-opacity duration-150"
-                    title={t("app.manageTags")}
+                    title="Manage tags"
                   >
                     <Tag size={10} />
                   </button>
@@ -270,12 +307,12 @@ const Sidebar = ({
                         </button>
                       );
                     })}
-                    {tags.length === 0 && <div className="text-[10px] text-muted-foreground">{t("app.noTagsYet")}</div>}
+                    {tags.length === 0 && <div className="text-[10px] text-muted-foreground">No tags yet</div>}
                     <button
                       onClick={() => setShowNewTag(true)}
                       className="w-full text-left px-2 py-1 font-mono text-[10px] text-primary hover:bg-secondary rounded-sm"
                     >
-                      {t("app.newTag")}
+                      + New tag
                     </button>
                   </div>
                 )}
@@ -290,7 +327,7 @@ const Sidebar = ({
                 type="text"
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
-                placeholder={t("app.tagName")}
+                placeholder="Tag name"
                 className="w-full px-2 py-1 bg-secondary/50 border border-border rounded-sm font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                 autoFocus
               />
@@ -314,13 +351,13 @@ const Sidebar = ({
                   }}
                   className="px-2 py-1 bg-primary text-primary-foreground font-mono text-[10px] rounded-sm hover:opacity-90"
                 >
-                  {t("app.create")}
+                  Create
                 </button>
                 <button
                   onClick={() => { setShowNewTag(false); setNewTagName(""); }}
                   className="px-2 py-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"
                 >
-                  {t("app.cancel")}
+                  Cancel
                 </button>
               </div>
             </div>
@@ -328,8 +365,137 @@ const Sidebar = ({
         </div>
 
         <div className="p-2 border-t border-border space-y-0.5">
+          <a href="/play" className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors">
+            ⚔️ Play Game
+          </a>
+          <a href="/bots" className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors">
+            🤖 Bot Foundry
+          </a>
+          <a href="/swarm" className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors">
+            🕸️ Bot Swarm
+          </a>
+          <a href="/control" className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors">
+            🛰️ Control
+          </a>
+          <a href="/keys" className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors">
+            🔑 API Key Vault
+          </a>
+          <a
+            href="https://dragon-chaos-wars.lovable.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Realm Accord — strategy game"
+          >
+            🐉 Realm Accord ↗
+          </a>
+          <a
+            href="https://jadelounge.lovable.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Horizon Network — social network"
+          >
+            🌐 Horizon Network ↗
+          </a>
+          <a
+            href="https://chaos-dragon-emperor.lovable.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Emperors of the Last Kingdom — fantasy strategy"
+          >
+            👑 Emperors of the Last Kingdom ↗
+          </a>
+          <a
+            href="/veilops"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="VeilOps — factual threat intelligence reference (MITRE ATT&CK, CISA KEV, APT profiles)"
+          >
+            🛡️ VeilOps Threat Intel
+          </a>
+          <a
+            href="/sentinel"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="RugDNA Sentinel — synthetic crypto-forensics reference dashboard"
+          >
+            🛰️ Sentinel · Crypto Forensics
+          </a>
+          <a
+            href="/marvels"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Microscopic Marvels — procedural cell-race simulation (virtual credits only)"
+          >
+            🧬 Microscopic Marvels Lab
+          </a>
+          <a
+            href="/apex"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Apex Intelligence Hub — reserved mount point"
+          >
+            🏔 Apex Hub (placeholder)
+          </a>
+          <a
+            href="/pods"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="eYe Pod Station — 24 compression pods with SHA-256 integrity"
+          >
+            🧊 eYe Pod Station
+          </a>
+          <a
+            href="/eru/visualizers"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Shared visualizer primitives — vibe-coding lab"
+          >
+            🧬 Visualizer Lab
+          </a>
+          <a
+            href="/eru/ailab"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Eru AI Lab"
+          >
+            🧪 Eru · AI Lab
+          </a>
+          <a
+            href="/eru/admin/security"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Eru Security Command Center"
+          >
+            🛰 Eru · Security
+          </a>
+          <a
+            href="/eru/bot-forge"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Eru Bot Forge"
+          >
+            🤖 Eru · Bot Forge
+          </a>
+          <a
+            href="/eru/bot-marketplace"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Eru Bot Marketplace"
+          >
+            🛍️ Eru · Bot Market
+          </a>
+          <a
+            href="/eru/eru-swarm-test"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Eru Swarm test harness"
+          >
+            🐝 Eru · Swarm
+          </a>
+          <a
+            href="/eru/eru-redteam-test"
+            className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors"
+            title="Eru Red-team test harness"
+          >
+            ⚔️ Eru · Red Team
+          </a>
+          <div className="px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
+            Press ⌘K anywhere to jump to all 84 Eru modules.
+          </div>
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            {t("app.core")}
+            Core
           </div>
           {coreFiles.map((file) => (
             <div key={file} className="px-2 py-1 font-mono text-[11px] text-muted-foreground truncate">
@@ -338,41 +504,46 @@ const Sidebar = ({
           ))}
         </div>
 
-        {/* Desktop navigation links */}
-        <div className="p-2 border-t border-border space-y-0.5">
-          <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            {t("nav.navigation", "Navigation")}
-          </div>
-          {[
-            { path: "/tasks", icon: ListTodo, label: "nav.tasks" },
-            { path: "/tasks/board", icon: Columns3, label: "nav.board" },
-            { path: "/tasks/calendar", icon: CalendarDays, label: "nav.calendar" },
-            { path: "/files", icon: FolderTree, label: "nav.files" },
-          ].map((item) => (
-            <button
-              key={item.path}
-              onClick={() => window.location.href = item.path}
-              className="w-full flex items-center gap-2 px-2 py-1.5 font-mono text-xs text-sidebar-foreground hover:bg-secondary/50 rounded-sm transition-colors"
-            >
-              <item.icon size={12} className="text-muted-foreground" />
-              {t(item.label)}
-            </button>
-          ))}
-        </div>
-
         <div className="p-4 border-t border-border space-y-2">
-          <div className="font-mono text-[10px] text-muted-foreground truncate" title={userEmail}>
+          <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70 flex items-center gap-1.5">
+            <ArchiveIcon size={10} /> Archive
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onExportArchive}
+              className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
+              title="Export all conversations to a JSON file"
+            >
+              <Download size={10} /> Export
+            </button>
+            <label
+              className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+              title="Import a Jackie archive JSON file"
+            >
+              <Upload size={10} /> Import
+              <input
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onImportArchive(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+          <div className="font-mono text-[10px] text-muted-foreground truncate pt-2 border-t border-border/50" title={userEmail}>
             {userEmail}
           </div>
-          <div className="flex items-center gap-2 justify-between">
+          <div className="flex items-center gap-2">
             <button
               onClick={onSignOut}
               className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-destructive transition-colors"
             >
               <LogOut size={10} />
-              {t("app.signOut")}
+              Sign Out
             </button>
-            <LanguageSelector />
           </div>
         </div>
       </aside>
@@ -382,21 +553,17 @@ const Sidebar = ({
 
 // ─── Memory Dots ───────────────────────────────────────────
 
-const MemoryDots = ({ tier }: { tier: 1 | 2 | 3 }) => {
-  const { t } = useTranslation();
-  return (
-    <div className="flex gap-1 items-center" title={`${t("memory.tier", "Memory tier")}: ${[t("memory.ephemeral", "Ephemeral"), t("memory.durable", "Durable"), t("memory.gold", "Gold")][tier - 1]}`}>
-      {[1, 2, 3].map((i) => (
-        <span key={i} className={`memory-dot ${i <= tier ? "active" : ""}`} />
-      ))}
-    </div>
-  );
-};
+const MemoryDots = ({ tier }: { tier: 1 | 2 | 3 }) => (
+  <div className="flex gap-1 items-center" title={`Memory tier: ${["Ephemeral", "Durable", "Gold"][tier - 1]}`}>
+    {[1, 2, 3].map((i) => (
+      <span key={i} className={`memory-dot ${i <= tier ? "active" : ""}`} />
+    ))}
+  </div>
+);
 
 // ─── Messages ──────────────────────────────────────────────
 
 const JackieMessage = ({ message }: { message: DisplayMessage }) => {
-  const { t } = useTranslation();
   const [speaking, setSpeaking] = useState(false);
 
   const toggleSpeak = async () => {
@@ -417,15 +584,13 @@ const JackieMessage = ({ message }: { message: DisplayMessage }) => {
   return (
     <div className="space-y-3 stagger-enter">
       <div className="flex items-center justify-between">
-        <span className="jackie-badge">
-          {message.hydra ? t("hydra.badge", "Hydra Coder—") : "Jackie here—"}
-        </span>
+        <span className="jackie-badge">Jackie here—</span>
         <div className="flex items-center gap-2">
           {voiceManager.isSupported() && (
             <button
               onClick={toggleSpeak}
               className="p-1 rounded-sm text-muted-foreground hover:text-primary transition-colors"
-              title={speaking ? t("app.stopSpeaking", "Stop speaking") : t("app.readAloud", "Read aloud")}
+              title={speaking ? "Stop speaking" : "Read aloud"}
             >
               {speaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
             </button>
@@ -442,20 +607,7 @@ const JackieMessage = ({ message }: { message: DisplayMessage }) => {
         </div>
       )}
 
-      <div className="text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert hydra-wrap">
-        <ReactMarkdown>{message.content}</ReactMarkdown>
-      </div>
-
-      {message.hydra && (
-        <HydraMeta
-          winner={message.hydra.winner}
-          candidates={message.hydra.candidates}
-          total_latency_ms={message.hydra.total_latency_ms}
-          judge_latency_ms={message.hydra.judge_latency_ms}
-          source={message.hydra.source}
-          reasoning={message.hydra.reasoning}
-        />
-      )}
+      <MarkdownRenderer content={message.content} />
 
       {message.attachments && message.attachments.length > 0 && (
         <AttachmentDisplay attachments={message.attachments} />
@@ -494,7 +646,6 @@ const CORE_FILES = [
 ];
 
 const Index = () => {
-  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -504,13 +655,23 @@ const Index = () => {
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [bgSettings, setBgSettings] = useState<NSSettings>(() => loadNeutronSettings());
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
-  const [selectedModel, setSelectedModel] = useState<JackieModelId>("google/gemini-2.5-pro");
+  const [selectedModel, setSelectedModel] = useState<JackieModelId>(
+    () => (getChatPreset().model as JackieModelId) || "google/gemini-2.5-pro"
+  );
+  const [presetModel, setPresetModel] = useState<string>(() => getChatPreset().model);
+
+  const saveCurrentAsPreset = useCallback(() => {
+    setChatPreset({ provider: "lovable", model: selectedModel });
+    setPresetModel(selectedModel);
+    toast.success("Default model saved for new chats.");
+  }, [selectedModel]);
   const [tags, setTags] = useState<TagType[]>([]);
   const [tagMap, setTagMap] = useState<Record<string, string[]>>({});
   const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
-  const [coderMode, setCoderMode] = useState(false);
-  const [hydraSettingsOpen, setHydraSettingsOpen] = useState(false);
+  const [rateLimitCooldown, setRateLimitCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const changeModel = useCallback(async (model: JackieModelId) => {
     setSelectedModel(model);
@@ -629,6 +790,29 @@ const Index = () => {
     setMessages([]);
     setChatHistory([]);
     setInput("");
+    // Apply saved preset model for every new chat.
+    const preset = getChatPreset();
+    setSelectedModel(preset.model as JackieModelId);
+  };
+
+  const handleExportArchive = async () => {
+    try {
+      const count = await downloadArchive();
+      toast.success(`Archive exported (${count} conversation${count === 1 ? "" : "s"}).`);
+    } catch (e: any) {
+      toast.error(e?.message || "Export failed.");
+    }
+  };
+
+  const handleImportArchive = async (file: File) => {
+    try {
+      toast.info("Importing archive…");
+      const { conversations: c, messages: m, skipped } = await importArchive(file);
+      toast.success(`Imported ${c} conversation${c === 1 ? "" : "s"}, ${m} message${m === 1 ? "" : "s"}${skipped ? ` (${skipped} skipped)` : ""}.`);
+      await loadConversations();
+    } catch (e: any) {
+      toast.error(e?.message || "Import failed.");
+    }
   };
 
   const handleDeleteConversation = async (id: string) => {
@@ -651,39 +835,194 @@ const Index = () => {
     }, 50);
   };
 
+  // ── Slash Command Handler ──
+  const handleSlashCommand = async (text: string, convId: string): Promise<string | null> => {
+    const parts = text.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const args = parts.slice(1).join(' ');
+
+    switch (cmd) {
+      case '/remember': {
+        if (!args) return "**Usage:** `/remember <key> = <value>`\nExample: `/remember preferred_framework = React with TypeScript`";
+        const [key, ...valParts] = args.split('=');
+        const value = valParts.join('=').trim();
+        if (!key.trim() || !value) return "**Format:** `/remember key = value`";
+        try {
+          await upsertMemory(key.trim(), value, 'preference', convId);
+          return `✅ **Remembered:** ${key.trim()} → ${value}`;
+        } catch (e: any) {
+          return `❌ Failed to save memory: ${e.message}`;
+        }
+      }
+      case '/memories': {
+        try {
+          const mems = args ? await searchMemories(args) : await getMemories();
+          if (mems.length === 0) return "📭 No memories stored yet. Use `/remember key = value` to teach me.";
+          let out = "## 🧠 Jackie's Memory\n\n";
+          for (const m of mems.slice(0, 20)) {
+            out += `- **${m.key}** → ${m.value} _(${m.category}, ${(m.confidence * 100).toFixed(0)}%)_\n`;
+          }
+          return out;
+        } catch (e: any) {
+          return `❌ ${e.message}`;
+        }
+      }
+      case '/forget': {
+        if (!args) return "**Usage:** `/forget <search term>`";
+        try {
+          const mems = await searchMemories(args);
+          if (mems.length === 0) return "No matching memories found.";
+          for (const m of mems) await deleteMemory(m.id);
+          return `🗑️ Forgot ${mems.length} memor${mems.length === 1 ? 'y' : 'ies'} matching "${args}"`;
+        } catch (e: any) {
+          return `❌ ${e.message}`;
+        }
+      }
+      case '/task': {
+        if (!args) return "**Usage:** `/task <title>` — Creates a new task\nOr: `/task done <id>` `/task list`";
+        if (args.toLowerCase() === 'list') {
+          const tasks = await getTasks();
+          if (tasks.length === 0) return "📋 No tasks. Create one with `/task <title>`";
+          let out = "## 📋 Tasks\n\n";
+          const statusEmoji: Record<string, string> = { todo: '📋', in_progress: '🔧', done: '✅', blocked: '🚫' };
+          const prioEmoji: Record<string, string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
+          for (const t of tasks) {
+            out += `- ${statusEmoji[t.status] || ''} ${prioEmoji[t.priority] || ''} **${t.title}** _(${t.status})_ \`${t.id.slice(0, 8)}\`\n`;
+          }
+          return out;
+        }
+        try {
+          const task = await createTask(args);
+          return `✅ **Task created:** ${task.title} \`${task.id.slice(0, 8)}\``;
+        } catch (e: any) {
+          return `❌ ${e.message}`;
+        }
+      }
+      case '/done': {
+        if (!args) return "**Usage:** `/done <task-id-prefix>`";
+        try {
+          const tasks = await getTasks();
+          const match = tasks.find(t => t.id.startsWith(args.trim()));
+          if (!match) return "❌ No task found with that ID prefix.";
+          await completeTask(match.id);
+          return `✅ **Completed:** ${match.title}`;
+        } catch (e: any) {
+          return `❌ ${e.message}`;
+        }
+      }
+      case '/files': {
+        try {
+          const files = args ? await searchFiles(args) : await listFiles(convId);
+          if (files.length === 0) return "📁 No files found.";
+          let out = "## 📁 Files\n\n";
+          for (const f of files.slice(0, 20)) {
+            const size = f.size < 1024 ? `${f.size}B` : f.size < 1048576 ? `${(f.size / 1024).toFixed(1)}KB` : `${(f.size / 1048576).toFixed(1)}MB`;
+            out += `- 📎 **${f.name}** (${f.type}, ${size})\n`;
+          }
+          return out;
+        } catch (e: any) {
+          return `❌ ${e.message}`;
+        }
+      }
+      case '/imagine': {
+        if (!args) return "**Usage:** `/imagine <description>`\nExample: `/imagine a futuristic city skyline at sunset`";
+        try {
+          toast.info("🎨 Generating image...");
+          const result = await generateImage(args);
+          return `## 🎨 Generated Image\n\n![Generated](${result.image})\n\n${result.text || ''}`;
+        } catch (e: any) {
+          return `❌ Image generation failed: ${e.message}`;
+        }
+      }
+      case '/stats': {
+        try {
+          const [taskStats, memCount] = await Promise.all([getTaskStats(), getMemories()]);
+          return `## 📊 Jackie Stats\n\n**Tasks:** ${taskStats.total} total (${taskStats.todo} todo, ${taskStats.inProgress} active, ${taskStats.done} done, ${taskStats.blocked} blocked)\n**Critical:** ${taskStats.critical}\n**Memories:** ${memCount.length} stored\n**Model:** ${selectedModel}`;
+        } catch {
+          return "❌ Failed to load stats.";
+        }
+      }
+      case '/discernment': {
+        if (!args) return "**Usage:** `/discernment <URL, tool name, or description>`\nExample: `/discernment https://free-followers-now.xyz`\nJackie will analyze it through Jessy's discernment lens.";
+        try {
+          toast.info("🔍 Analyzing...");
+          const discernmentPrompt = `Analyze the following through Jessy's discernment lens. Evaluate whether this is signal or bait, real value or distraction, trustworthy or a trap. Be calm, precise, and protective — not harsh or reactive.
+
+Subject to evaluate: "${args}"
+
+Provide your assessment in this structure:
+1. **Trust Level** — rate as: ✅ Clean, ⚠️ Caution, or 🚫 Avoid
+2. **What it claims** — what does it present itself as?
+3. **What it likely is** — your honest read
+4. **Red flags** — specific concerns (or "None detected")
+5. **Recommendation** — calm, actionable guidance
+
+Keep it concise but thorough. No hype, no false alarm — just truth.`;
+
+          const res = await fetch(
+            `https://rkwhhbxgjdpehfuxsult.supabase.co/functions/v1/jackie-chat`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+                'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              },
+              body: JSON.stringify({
+                model: selectedModel,
+                messages: [{ role: 'user', content: discernmentPrompt }],
+              }),
+            }
+          );
+          if (!res.ok) throw new Error('Analysis failed');
+          const reader = res.body?.getReader();
+          if (!reader) throw new Error('No response stream');
+          let result = '';
+          const decoder = new TextDecoder();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value);
+            for (const line of chunk.split('\n')) {
+              if (!line.startsWith('data: ') || line.includes('[DONE]')) continue;
+              try {
+                const j = JSON.parse(line.slice(6));
+                result += j.choices?.[0]?.delta?.content || '';
+              } catch {}
+            }
+          }
+          return `## 🔍 Discernment Analysis\n\n${result || 'No assessment could be generated.'}`;
+        } catch (e: any) {
+          return `❌ Discernment analysis failed: ${e.message}`;
+        }
+      }
+      case '/help':
+        return `## Jackie Commands\n
+| Command | Description |
+|---------|------------|
+| \`/remember key = value\` | Teach Jackie a preference or decision |
+| \`/memories [search]\` | View stored memories |
+| \`/forget <search>\` | Delete matching memories |
+| \`/task <title>\` | Create a coding task |
+| \`/task list\` | Show all tasks |
+| \`/done <id>\` | Mark task complete |
+| \`/files [search]\` | Browse uploaded files |
+| \`/imagine <prompt>\` | Generate an image |
+| \`/discernment <subject>\` | Analyze a URL, tool, or offer for trust |
+| \`/stats\` | View Jackie's stats |
+| \`/help\` | Show this guide |`;
+      default:
+        return null; // Not a recognized command, proceed as normal message
+    }
+  };
+
   const handleSubmit = async () => {
-    if ((!input.trim() && pendingFiles.length === 0) || isProcessing) return;
+    if ((!input.trim() && pendingFiles.length === 0) || isProcessing || rateLimitCooldown > 0) return;
 
     const userText = input.trim();
     const filesToUpload = [...pendingFiles];
     setInput("");
     setPendingFiles([]);
-
-    // Check for task commands first
-    if (userText && filesToUpload.length === 0) {
-      try {
-        const cmdResult = await processTaskCommand(userText);
-        if (cmdResult.handled) {
-          const userMsg: DisplayMessage = {
-            id: Date.now().toString(),
-            role: "user",
-            content: userText,
-            timestamp: new Date(),
-          };
-          const botMsg: DisplayMessage = {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            content: cmdResult.response || "Done.",
-            timestamp: new Date(),
-            memoryTier: 1,
-          };
-          setMessages((prev) => [...prev, userMsg, botMsg]);
-          scrollToBottom();
-          return;
-        }
-      } catch { /* not a command, proceed normally */ }
-    }
-
     setIsProcessing(true);
 
     let convId = activeConvId;
@@ -697,6 +1036,25 @@ const Index = () => {
       } catch {
         toast.error("Failed to create conversation.");
         setIsProcessing(false);
+        return;
+      }
+    }
+
+    // ── Slash Commands ──
+    if (userText.startsWith('/')) {
+      const slashResult = await handleSlashCommand(userText, convId);
+      if (slashResult) {
+        const sysMsg: DisplayMessage = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: slashResult,
+          timestamp: new Date(),
+          memoryTier: 1,
+        };
+        setMessages((prev) => [...prev, sysMsg]);
+        try { await saveMessage({ conversation_id: convId, role: "assistant", content: slashResult }); } catch {}
+        setIsProcessing(false);
+        scrollToBottom();
         return;
       }
     }
@@ -744,45 +1102,22 @@ const Index = () => {
       { id: assistantTempId, role: "assistant", content: "", timestamp: new Date(), memoryTier: 1 },
     ]);
 
-    // ─── Coder Agent (Hydra) branch ─────────────────────────
-    if (coderMode) {
-      try {
-        const hydra = await callHydraCoder(userText);
-        assistantContent = hydra.final_answer;
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantTempId
-              ? { ...m, content: assistantContent, hydra, memoryTier: 2 }
-              : m
-          )
-        );
-        setChatHistory((prev) => [...prev, { role: "assistant", content: assistantContent }]);
-        try {
-          await saveMessage({
-            conversation_id: convId!,
-            role: "assistant",
-            content: assistantContent,
-            memory_tier: 2,
-          });
-          if (newHistory.length === 1) {
-            await updateConversationTitle(convId!, generateTitle(userText));
-            await loadConversations();
-          }
-        } catch { /* best effort */ }
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : t("hydra.failed", "Hydra Coder failed"));
-        setMessages((prev) => prev.filter((m) => m.id !== assistantTempId));
-      } finally {
-        setIsProcessing(false);
-        scrollToBottom();
-      }
-      return;
-    }
+    const gameContext = getGameStateContext();
+    // Inject Jackie's memory + tasks into context
+    let jackieContext = gameContext;
+    try {
+      const [memCtx, taskCtx, fileCtx] = await Promise.all([
+        buildMemoryContext(),
+        buildTaskContext(),
+        convId ? buildFileContext(convId) : Promise.resolve(""),
+      ]);
+      jackieContext = [gameContext, memCtx, taskCtx, fileCtx].filter(Boolean).join("\n");
+    } catch { /* graceful degradation */ }
 
-    // ─── Normal Jackie chat stream ──────────────────────────
     await streamChat({
       messages: newHistory,
       model: selectedModel,
+      context: jackieContext,
       onDelta: (chunk) => {
         assistantContent += chunk;
         setMessages((prev) =>
@@ -819,10 +1154,34 @@ const Index = () => {
           console.error("Failed to persist assistant message");
         }
 
+        // Auto-extract memories from conversation
+        try {
+          const candidates = extractMemoryCandidates(userText, assistantContent);
+          for (const c of candidates) {
+            await upsertMemory(c.key, c.value, c.category, convId!);
+          }
+        } catch { /* silent */ }
+
         setIsProcessing(false);
       },
       onError: (err) => {
-        toast.error(err);
+        if (err.includes("Rate limit") || err.includes("rate limit")) {
+          const seconds = 30;
+          setRateLimitCooldown(seconds);
+          if (cooldownRef.current) clearInterval(cooldownRef.current);
+          cooldownRef.current = setInterval(() => {
+            setRateLimitCooldown((prev) => {
+              if (prev <= 1) {
+                clearInterval(cooldownRef.current!);
+                cooldownRef.current = null;
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        } else {
+          toast.error(err);
+        }
         setMessages((prev) => prev.filter((m) => m.id !== assistantTempId));
         setIsProcessing(false);
       },
@@ -912,7 +1271,14 @@ const Index = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden relative">
+      {/* Epic neutron-star ambient backdrop — sits behind everything, low opacity for readability */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <AnimatedCanvas theme={bgSettings.theme} opacity={bgSettings.opacity} glow={bgSettings.glow} />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background/60" />
+      </div>
+      <NeutronBackgroundSettings value={bgSettings} onChange={setBgSettings} />
+      <div className="relative z-10 flex h-full w-full overflow-hidden">
       <Sidebar
         conversations={conversations}
         activeId={activeConvId}
@@ -933,10 +1299,12 @@ const Index = () => {
         onCreateTag={handleCreateTag}
         onDeleteTag={handleDeleteTag}
         onToggleTag={handleToggleTag}
+        onExportArchive={handleExportArchive}
+        onImportArchive={handleImportArchive}
       />
 
       <main
-        className="flex-1 flex flex-col min-h-screen relative pb-14 md:pb-0"
+        className="flex-1 flex flex-col h-full overflow-hidden relative"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
@@ -947,7 +1315,7 @@ const Index = () => {
             <div className="flex flex-col items-center gap-2">
               <Download size={32} className="text-primary" />
               <span className="font-mono text-xs uppercase tracking-widest text-primary">
-                {t("app.dropFiles")}
+                Drop files here
               </span>
             </div>
           </div>
@@ -961,12 +1329,14 @@ const Index = () => {
             <Menu size={18} />
           </button>
           <span className="font-mono text-sm font-bold text-primary tracking-wider">J</span>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground flex-1">Jackie</span>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Jackie</span>
+          
+          <div className="flex-1" />
           {messages.length > 0 && (
             <button
               onClick={exportChat}
               className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors"
-              title={t("app.exportChat")}
+              title="Export chat"
             >
               <Download size={16} />
             </button>
@@ -974,7 +1344,7 @@ const Index = () => {
           <button
             onClick={toggleTheme}
             className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary btn-mechanical transition-colors"
-            title={t("app.switchTheme")}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -986,16 +1356,17 @@ const Index = () => {
           </div>
         )}
 
+        <ScrollNav targetRef={feedRef} />
         <div className="flex-1 overflow-y-auto" ref={feedRef}>
           <div className="max-w-[768px] p-4 space-y-6">
             {messages.length === 0 && (
               <div className="flex flex-col items-start justify-center min-h-[60vh] space-y-4">
                 <span className="font-mono text-4xl font-bold text-primary">J</span>
                 <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                  {t("app.tagline")}
+                  System_Status: Grounded. Memory: Active.
                 </div>
                 <p className="text-muted-foreground text-sm max-w-md">
-                  {t("app.ready")}
+                  Jackie is ready. Type a command, ask a question, paste some code, or start building.
                 </p>
               </div>
             )}
@@ -1043,96 +1414,100 @@ const Index = () => {
                 }}
                 disabled={isProcessing}
               />
-              <button
-                onClick={handleSubmit}
-                disabled={isProcessing || (!input.trim() && pendingFiles.length === 0)}
-                className={`p-3 rounded-sm text-primary-foreground hover:opacity-90 disabled:opacity-30 transition-opacity btn-mechanical flex-shrink-0 ${
-                  coderMode ? "bg-gradient-to-br from-primary to-purple-500" : "bg-primary"
-                }`}
-                title={t("app.send")}
-              >
-                {coderMode ? <Cpu size={16} /> : <Send size={16} />}
-              </button>
-            </div>
-            <div className="flex items-center justify-between mt-1.5 ml-5">
-              <div className="relative">
+              {rateLimitCooldown > 0 ? (
+                <div className="p-3 rounded-sm bg-destructive/20 border border-destructive/40 text-destructive font-mono text-xs flex items-center gap-2 flex-shrink-0 animate-pulse">
+                  <Zap size={14} />
+                  {rateLimitCooldown}s
+                </div>
+              ) : (
                 <button
-                  onClick={() => setModelMenuOpen((prev) => !prev)}
-                  className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={handleSubmit}
+                  disabled={isProcessing || (!input.trim() && pendingFiles.length === 0)}
+                  className="p-3 rounded-sm bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-30 transition-opacity btn-mechanical flex-shrink-0"
+                  title="Send (Enter)"
                 >
-                  {JACKIE_MODELS.find((m) => m.id === selectedModel)?.label ?? t("app.model")}
-                  <ChevronDown size={10} />
+                  <Send size={16} />
                 </button>
-                {modelMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setModelMenuOpen(false)} />
-                    <div className="absolute bottom-full left-0 mb-1 z-50 bg-popover border border-border rounded-sm shadow-lg py-1 min-w-[260px]">
-                      {JACKIE_MODELS.map((m) => {
-                        const costLabel = ["$", "$$", "$$$"][m.cost - 1];
-                        const speedDots = Array.from({ length: 3 }, (_, i) => i < m.speed);
-                        return (
-                          <button
-                            key={m.id}
-                            onClick={() => {
-                              changeModel(m.id);
-                              setModelMenuOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 font-mono text-xs hover:bg-secondary transition-colors flex items-center gap-3 ${
-                              selectedModel === m.id ? "text-primary bg-secondary/50" : "text-popover-foreground"
-                            }`}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold">{m.label}</span>
-                                {selectedModel === m.id && <span className="text-[9px] text-primary">●</span>}
-                              </div>
-                              <span className="text-[10px] text-muted-foreground">{m.description}</span>
-                            </div>
-                            <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                              <span className={`text-[10px] font-semibold ${m.cost === 1 ? "text-green-500" : m.cost === 2 ? "text-yellow-500" : "text-orange-500"}`}>
-                                {costLabel}
-                              </span>
-                              <div className="flex gap-0.5" title={`Speed: ${m.speed}/3`}>
-                                {speedDots.map((active, i) => (
-                                  <Zap key={i} size={8} className={active ? "text-primary fill-primary" : "text-muted-foreground/30"} />
-                                ))}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setCoderMode((p) => !p)}
-                  className={`flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                    coderMode ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  title={t("hydra.toggleHint", "Toggle Coder Agent (8-model fan-out)")}
-                >
-                  <Cpu size={10} className={coderMode ? "text-primary" : ""} />
-                  {t("hydra.coder", "Coder")}
-                </button>
-                <button
-                  onClick={() => setHydraSettingsOpen(true)}
-                  className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                  title={t("hydra.settings.title", "Hydra Settings")}
-                >
-                  <Settings size={10} />
-                </button>
-                <span className="font-mono text-[10px] text-muted-foreground hidden sm:inline">
-                  {t("app.enterToSend")}
-                </span>
-              </div>
+              )}
             </div>
           </div>
         </div>
-      </main>
 
-      <HydraSettings open={hydraSettingsOpen} onClose={() => setHydraSettingsOpen(false)} />
+        {/* Floating draggable toolbar — hold grip 1s to move */}
+        <DraggableToolbar>
+          <button
+            onClick={saveCurrentAsPreset}
+            className={`p-1 rounded-full transition-colors ${
+              presetModel === selectedModel ? "text-primary" : "text-muted-foreground hover:text-primary"
+            }`}
+            title={presetModel === selectedModel ? "Default model for new chats" : "Pin as default"}
+          >
+            <Pin size={12} className={presetModel === selectedModel ? "fill-primary" : ""} />
+          </button>
+          <div className="relative">
+            <button
+              onClick={() => setModelMenuOpen((prev) => !prev)}
+              className="flex items-center gap-1 px-2 py-1 rounded-full font-mono text-[10px] text-foreground hover:bg-secondary transition-colors"
+            >
+              {JACKIE_MODELS.find((m) => m.id === selectedModel)?.label ?? "Model"}
+              <ChevronDown size={10} />
+            </button>
+            {modelMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setModelMenuOpen(false)} />
+                <div className="absolute bottom-full right-0 mb-2 z-50 bg-popover border border-border rounded-md shadow-lg py-1 min-w-[260px]">
+                  {JACKIE_MODELS.map((m) => {
+                    const costLabel = ["$", "$$", "$$$"][m.cost - 1];
+                    const speedDots = Array.from({ length: 3 }, (_, i) => i < m.speed);
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => { changeModel(m.id); setModelMenuOpen(false); }}
+                        className={`w-full text-left px-3 py-2 font-mono text-xs hover:bg-secondary transition-colors flex items-center gap-3 ${
+                          selectedModel === m.id ? "text-primary bg-secondary/50" : "text-popover-foreground"
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{m.label}</span>
+                            {selectedModel === m.id && <span className="text-[9px] text-primary">●</span>}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{m.description}</span>
+                        </div>
+                        <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                          <span className={`text-[10px] font-semibold ${m.cost === 1 ? "text-green-500" : m.cost === 2 ? "text-yellow-500" : "text-orange-500"}`}>
+                            {costLabel}
+                          </span>
+                          <div className="flex gap-0.5" title={`Speed: ${m.speed}/3`}>
+                            {speedDots.map((active, i) => (
+                              <Zap key={i} size={8} className={active ? "text-primary fill-primary" : "text-muted-foreground/30"} />
+                            ))}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <a
+                    href="/providers"
+                    className="block px-3 py-2 border-t border-border font-mono text-[10px] text-muted-foreground hover:text-primary hover:bg-secondary transition-colors"
+                  >
+                    → More providers (Groq, OpenRouter, Ollama…)
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+          {messages.length > 0 && (
+            <button
+              onClick={exportChat}
+              className="p-1 rounded-full text-muted-foreground hover:text-primary transition-colors"
+              title="Export chat"
+            >
+              <Download size={12} />
+            </button>
+          )}
+        </DraggableToolbar>
+      </main>
 
       <style>{`
         @keyframes progressSlide {
@@ -1140,17 +1515,15 @@ const Index = () => {
           50% { width: 60%; margin-left: 20%; }
           100% { width: 0%; margin-left: 100%; }
         }
-        .prose pre { background: hsl(var(--secondary)); border: 1px solid hsl(var(--border)); border-radius: 2px; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; overflow-x: hidden; }
-        .prose pre code { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
-        .prose code { font-family: var(--font-mono); font-size: 13px; word-break: break-word; overflow-wrap: anywhere; }
+        .prose pre { background: hsl(var(--secondary)); border: 1px solid hsl(var(--border)); border-radius: 2px; }
+        .prose code { font-family: var(--font-mono); font-size: 13px; }
         .prose p code { background: hsl(var(--secondary)); padding: 2px 6px; border-radius: 2px; }
-        .prose a { color: hsl(var(--primary)); word-break: break-all; }
+        .prose a { color: hsl(var(--primary)); }
         .prose strong { color: hsl(var(--foreground)); }
         .prose h1, .prose h2, .prose h3 { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; color: hsl(var(--foreground)); }
         .prose ul, .prose ol { color: hsl(var(--foreground) / 0.8); }
-        .prose p, .prose li { word-break: break-word; overflow-wrap: anywhere; }
-        .hydra-wrap { max-width: 100%; overflow-wrap: anywhere; }
       `}</style>
+      </div>
     </div>
   );
 };

@@ -141,7 +141,7 @@ export async function importArchive(file: File): Promise<ImportSummary> {
       }));
 
     if (rows.length > 0) {
-      const { error } = await (supabase as any).from("chat_messages").insert(rows);
+      const { error } = await supabase.from("chat_messages").insert(rows);
       if (!error) msgCount += rows.length;
     }
   }

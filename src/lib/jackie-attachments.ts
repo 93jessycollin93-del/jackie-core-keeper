@@ -73,16 +73,14 @@ export async function getMessageAttachments(messageId: string): Promise<Attachme
   return (data ?? []) as Attachment[];
 }
 
-export function getAttachmentUrl(storagePath: string): string {
-  // Bucket is private; return storage path — callers should use getSignedAttachmentUrl for a fetchable URL.
-  return storagePath;
-}
-
-export async function getSignedAttachmentUrl(storagePath: string, expiresInSec = 3600): Promise<string> {
+export async function getAttachmentUrl(storagePath: string): Promise<string> {
   const { data, error } = await supabase.storage
     .from("chat-attachments")
-    .createSignedUrl(storagePath, expiresInSec);
-  if (error) throw error;
+    .createSignedUrl(storagePath, 3600); // 1 hour expiry
+  if (error || !data?.signedUrl) {
+    console.error("Failed to create signed URL:", error);
+    return "";
+  }
   return data.signedUrl;
 }
 

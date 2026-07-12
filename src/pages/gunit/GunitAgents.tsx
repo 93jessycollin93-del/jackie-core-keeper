@@ -43,13 +43,13 @@ export default function GunitAgents() {
 
   const addAgent = async () => {
     if (!newName.trim() || !user) return;
-    await (supabase as any).from("gunit_agents").insert({ user_id: user.id, name: newName.trim() });
+    await supabase.from("gunit_agents").insert({ user_id: user.id, name: newName.trim() });
     setNewName("");
     fetchAgents();
   };
 
   const deleteAgent = async (id: string) => {
-    await (supabase as any).from("gunit_agents").delete().eq("id", id);
+    await supabase.from("gunit_agents").delete().eq("id", id);
     fetchAgents();
   };
 

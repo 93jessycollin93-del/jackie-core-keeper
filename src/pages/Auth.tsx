@@ -1,11 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 
+
 type AuthView = "login" | "signup" | "forgot" | "reset";
 
+const DEMO_EMAIL = "demo@jackie.dev";
+const DEMO_PASSWORD = "J4ck!3_D3m0#2026xQ";
+
 const Auth = () => {
+  const navigate = useNavigate();
   const [view, setView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,11 +91,14 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-8">
-        <div className="space-y-2">
-          <span className="font-mono text-5xl font-bold text-primary">J</span>
-          <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            {headingMap[view]}
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-2">
+            <span className="font-mono text-5xl font-bold text-primary">J</span>
+            <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              {headingMap[view]}
+            </div>
           </div>
+          
         </div>
 
         {/* Reset password form */}
@@ -210,6 +219,46 @@ const Auth = () => {
               </button>
             </form>
 
+            {view === "login" && (
+              <button
+                onClick={async () => {
+                  setLoading(true);
+                  setEmail(DEMO_EMAIL);
+                  setPassword(DEMO_PASSWORD);
+                  try {
+                    // Try sign in first, if fails create the demo account then sign in
+                    const { error } = await supabase.auth.signInWithPassword({
+                      email: DEMO_EMAIL,
+                      password: DEMO_PASSWORD,
+                    });
+                    if (error) {
+                      // Create demo account
+                      const { error: signUpErr } = await supabase.auth.signUp({
+                        email: DEMO_EMAIL,
+                        password: DEMO_PASSWORD,
+                      });
+                      if (signUpErr) throw signUpErr;
+                      // Try login again
+                      const { error: retryErr } = await supabase.auth.signInWithPassword({
+                        email: DEMO_EMAIL,
+                        password: DEMO_PASSWORD,
+                      });
+                      if (retryErr) throw retryErr;
+                    }
+                    toast.success("Welcome, demo user!");
+                  } catch (err: any) {
+                    toast.error(err.message || "Demo login failed.");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="w-full py-3 rounded-sm font-mono text-sm uppercase tracking-wider border-2 border-primary/50 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 btn-mechanical flex items-center justify-center gap-2"
+              >
+                ⚡ Demo — Press &amp; Enter
+              </button>
+            )}
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
@@ -224,7 +273,7 @@ const Auth = () => {
             <button
               onClick={async () => {
                 setLoading(true);
-                const { error } = await lovable.auth.signInWithOAuth("google", {
+                const { error } = await lovable.auth.signInWithOAuth("google" as any, {
                   redirect_uri: window.location.origin,
                 });
                 if (error) toast.error(error.message || "Google sign-in failed.");
@@ -243,29 +292,23 @@ const Auth = () => {
             </button>
 
             <button
-              onClick={async () => {
-                setLoading(true);
-                const { error } = await lovable.auth.signInWithOAuth("apple", {
-                  redirect_uri: window.location.origin,
-                });
-                if (error) toast.error(error.message || "Apple sign-in failed.");
-                setLoading(false);
-              }}
-              disabled={loading}
-              className="w-full py-3 rounded-sm font-mono text-sm uppercase tracking-wider border border-border bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-50 btn-mechanical flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-              </svg>
-              Continue with Apple
-            </button>
-
-            <button
               onClick={() => setView(view === "login" ? "signup" : "login")}
               className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               {view === "login" ? "Need an account? Sign up" : "Already have an account? Sign in"}
             </button>
+
+            {/* Sandbox mode */}
+            <button
+              onClick={() => {
+                sessionStorage.setItem("sandbox", "true");
+                navigate("/sandbox");
+              }}
+              className="w-full py-3 rounded-sm font-mono text-sm uppercase tracking-wider border border-dashed border-primary/30 text-primary/70 hover:text-primary hover:border-primary/60 hover:bg-primary/5 transition-all disabled:opacity-50 btn-mechanical flex items-center justify-center gap-2"
+            >
+              🧪 Sandbox Mode
+            </button>
+
           </>
         )}
       </div>

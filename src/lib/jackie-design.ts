@@ -155,8 +155,8 @@ export async function deleteEntry(id: string): Promise<void> {
 
 export async function getProjectContext(projectId: string): Promise<string> {
   const [projectRes, entriesRes] = await Promise.all([
-    (supabase as any).from("game_projects" as any).select("*").eq("id", projectId).single(),
-    (supabase as any).from("game_design_entries" as any).select("*").eq("project_id", projectId).order("category").order("sort_order"),
+    supabase.from("game_projects" as any).select("*").eq("id", projectId).single(),
+    supabase.from("game_design_entries" as any).select("*").eq("project_id", projectId).order("category").order("sort_order"),
   ]);
 
   const project = projectRes.data as unknown as GameProject | null;
