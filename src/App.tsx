@@ -10,8 +10,9 @@ import { I18nProvider } from "@/game/i18n";
 import { BottomNav } from "@/components/BottomNav";
 
 
+import { IndexFinder } from "@/components/IndexFinder";
+
 import Index from "./pages/Index";
-import Tasks from "./pages/Tasks";
 import TaskBoard from "./pages/TaskBoard";
 import TaskCalendar from "./pages/TaskCalendar";
 import Agents from "./pages/Agents";
