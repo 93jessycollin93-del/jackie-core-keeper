@@ -64,6 +64,78 @@ export type Database = {
           },
         ]
       }
+      api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          key_hash: string
+          name: string
+          prefix: string
+          scopes: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          name: string
+          prefix: string
+          scopes?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          name?: string
+          prefix?: string
+          scopes?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bot_api_keys: {
+        Row: {
+          api_key_id: string
+          bot_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          api_key_id: string
+          bot_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          api_key_id?: string
+          bot_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_api_keys_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_api_keys_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "user_bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_attachments: {
         Row: {
           conversation_id: string
@@ -246,6 +318,276 @@ export type Database = {
         }
         Relationships: []
       }
+      gunit_agents: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gunit_bots: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          spec: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          spec?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          spec?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gunit_improvements: {
+        Row: {
+          created_at: string
+          goal: string
+          id: string
+          improvement: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          goal: string
+          id?: string
+          improvement?: string
+          score?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          goal?: string
+          id?: string
+          improvement?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gunit_memory: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          role?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      jackie_control_audit: {
+        Row: {
+          action_id: string | null
+          actor: string
+          args: Json | null
+          command: string
+          id: string
+          message: string
+          result: string
+          ts: string
+          user_id: string
+        }
+        Insert: {
+          action_id?: string | null
+          actor: string
+          args?: Json | null
+          command: string
+          id?: string
+          message: string
+          result: string
+          ts?: string
+          user_id: string
+        }
+        Update: {
+          action_id?: string | null
+          actor?: string
+          args?: Json | null
+          command?: string
+          id?: string
+          message?: string
+          result?: string
+          ts?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      jackie_control_prefs: {
+        Row: {
+          model_override: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          model_override?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          model_override?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      jackie_control_swarms: {
+        Row: {
+          goal: string
+          id: string
+          models: Json
+          results: Json
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          goal: string
+          id: string
+          models?: Json
+          results?: Json
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          goal?: string
+          id?: string
+          models?: Json
+          results?: Json
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      jackie_memory: {
+        Row: {
+          category: string
+          confidence: number
+          created_at: string
+          id: string
+          key: string
+          source_conversation_id: string | null
+          updated_at: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          category?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          key: string
+          source_conversation_id?: string | null
+          updated_at?: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          category?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          key?: string
+          source_conversation_id?: string | null
+          updated_at?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      jackie_tasks: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pods: {
         Row: {
           compressed_at: string | null
@@ -387,6 +729,51 @@ export type Database = {
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_bots: {
+        Row: {
+          api_keys: Json
+          behavior_style: string | null
+          created_at: string
+          id: string
+          language: string | null
+          logic_modules: Json
+          name: string
+          platform: string | null
+          purpose: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_keys?: Json
+          behavior_style?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          logic_modules?: Json
+          name: string
+          platform?: string | null
+          purpose?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_keys?: Json
+          behavior_style?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          logic_modules?: Json
+          name?: string
+          platform?: string | null
+          purpose?: string | null
+          status?: string
           updated_at?: string
           user_id?: string
         }
