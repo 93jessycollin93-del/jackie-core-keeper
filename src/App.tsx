@@ -45,9 +45,7 @@ import PodStation from "./pages/PodStation";
 import Design from "./pages/Design";
 import NotFound from "./pages/NotFound";
 
-const EruRouter = lazy(() => import("./eru/EruRouter"));
-const FloatingEditorNav = lazy(() => import("./eru/FloatingEditorNav"));
-const VisualizerLab = lazy(() => import("./eru/VisualizerLab"));
+
 
 const queryClient = new QueryClient();
 
