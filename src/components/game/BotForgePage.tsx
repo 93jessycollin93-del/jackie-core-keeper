@@ -104,8 +104,8 @@ export default function BotForgePage() {
 
   const loadBots = async () => {
     if (!user) return;
-    const { data } = await supabase.from('user_bots').select('id, name, purpose, behavior_style, status, created_at').eq('user_id', user.id).eq('platform', 'game').order('created_at', { ascending: false });
-    const { data: links } = await supabase.from('bot_api_keys').select('bot_id, api_key_id').eq('user_id', user.id);
+    const { data } = await (supabase as any).from('user_bots').select('id, name, purpose, behavior_style, status, created_at').eq('user_id', user.id).eq('platform', 'game').order('created_at', { ascending: false });
+    const { data: links } = await (supabase as any).from('bot_api_keys').select('bot_id, api_key_id').eq('user_id', user.id);
     if (links) setBotKeyLinks(links);
     if (data) setBots(data.map(b => {
       const link = links?.find(l => l.bot_id === b.id);
@@ -132,7 +132,7 @@ export default function BotForgePage() {
     if (!user || !config.name.trim()) { toast.error('Name your bot, commander!'); return; }
     setLoading(true);
     try {
-      const { error } = await supabase.from('user_bots').insert({
+      const { error } = await (supabase as any).from('user_bots').insert({
         user_id: user.id,
         name: config.name.trim(),
         purpose: config.purpose,
@@ -157,7 +157,7 @@ export default function BotForgePage() {
 
   const updateBotStatus = async (botId: string, newStatus: string) => {
     try {
-      const { error } = await supabase.from('user_bots').update({ status: newStatus }).eq('id', botId).eq('user_id', user!.id);
+      const { error } = await (supabase as any).from('user_bots').update({ status: newStatus }).eq('id', botId).eq('user_id', user!.id);
       if (error) throw error;
       toast.success(`Bot ${newStatus === 'active' ? 'activated' : newStatus === 'paused' ? 'paused' : 'updated'}!`);
       loadBots();
@@ -169,8 +169,8 @@ export default function BotForgePage() {
   const deleteBot = async (botId: string, botName: string) => {
     try {
       // Unlink keys first
-      await supabase.from('bot_api_keys').delete().eq('bot_id', botId).eq('user_id', user!.id);
-      const { error } = await supabase.from('user_bots').delete().eq('id', botId).eq('user_id', user!.id);
+      await (supabase as any).from('bot_api_keys').delete().eq('bot_id', botId).eq('user_id', user!.id);
+      const { error } = await (supabase as any).from('user_bots').delete().eq('id', botId).eq('user_id', user!.id);
       if (error) throw error;
       toast.success(`🗑️ ${botName} decommissioned`);
       loadBots();
@@ -183,7 +183,7 @@ export default function BotForgePage() {
   const linkKeyToBot = async (botId: string, keyId: string) => {
     if (!user) return;
     try {
-      await supabase.from('bot_api_keys').delete().eq('bot_id', botId).eq('user_id', user.id);
+      await (supabase as any).from('bot_api_keys').delete().eq('bot_id', botId).eq('user_id', user.id);
       await apiKeysCall('link-bot', 'POST', { bot_id: botId, api_key_id: keyId });
       toast.success('🔗 Key linked to bot');
       setLinkingBotId(null);
@@ -196,7 +196,7 @@ export default function BotForgePage() {
   const unlinkKeyFromBot = async (botId: string) => {
     if (!user) return;
     try {
-      await supabase.from('bot_api_keys').delete().eq('bot_id', botId).eq('user_id', user.id);
+      await (supabase as any).from('bot_api_keys').delete().eq('bot_id', botId).eq('user_id', user.id);
       toast.success('🔓 Key unlinked');
       loadBots();
     } catch (e: any) {
