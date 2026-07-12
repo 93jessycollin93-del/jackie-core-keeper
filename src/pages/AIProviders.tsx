@@ -1,13 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { PROVIDERS, OLLAMA_AGENTS, type ProviderId } from "@/lib/jackie-providers";
+import { PROVIDERS, OLLAMA_AGENTS, FRAMEWORKS, type ProviderId } from "@/lib/jackie-providers";
 import { streamProviderChat } from "@/lib/jackie-provider-stream";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Zap, Cpu, Cloud, HardDrive, ExternalLink, KeyRound, Play, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Zap, Cpu, Cloud, HardDrive, ExternalLink, KeyRound, Play, Loader2, CheckCircle2, Network, Users, Workflow, Database, Blocks } from "lucide-react";
+
+const FRAMEWORK_ICONS = {
+  graph: Network,
+  crew: Users,
+  workflow: Workflow,
+  rag: Database,
+  kernel: Blocks,
+} as const;
+
 
 const ICONS: Record<ProviderId, typeof Zap> = {
   lovable: Cloud,
