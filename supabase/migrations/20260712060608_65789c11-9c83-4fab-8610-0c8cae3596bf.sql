@@ -1,0 +1,1 @@
+ALTER TABLE public.gunit_agents ADD COLUMN IF NOT EXISTS last_run_at timestamptz;

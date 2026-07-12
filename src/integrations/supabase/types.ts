@@ -323,6 +323,7 @@ export type Database = {
           config: Json
           created_at: string
           id: string
+          last_run_at: string | null
           name: string
           status: string
           updated_at: string
@@ -332,6 +333,7 @@ export type Database = {
           config?: Json
           created_at?: string
           id?: string
+          last_run_at?: string | null
           name: string
           status?: string
           updated_at?: string
@@ -341,6 +343,7 @@ export type Database = {
           config?: Json
           created_at?: string
           id?: string
+          last_run_at?: string | null
           name?: string
           status?: string
           updated_at?: string
