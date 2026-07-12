@@ -28,55 +28,64 @@ type Provider = {
   minLen: number;
   docs: string;
   hint: string;
+  /** true = billed to workspace credits (built-in). false = user pays the provider directly. */
+  billedByWorkspace: boolean;
 };
 
 const PROVIDERS: Provider[] = [
   {
     id: "lovable",
-    label: "Lovable AI Gateway",
+    label: "Lovable AI Gateway (built-in)",
     secretName: "LOVABLE_API_KEY",
     keyPrefix: "",
     minLen: 0,
     docs: "https://docs.lovable.dev/features/ai",
-    hint: "Auto-provisioned. No action needed unless it was rotated.",
+    hint:
+      "Auto-provisioned. Routes to Gemini, GPT-5, Claude and more through your workspace credits — no third-party billing.",
+    billedByWorkspace: true,
   },
   {
     id: "openai",
-    label: "OpenAI",
+    label: "OpenAI (bring your own — you pay OpenAI)",
     secretName: "OPENAI_API_KEY",
     keyPrefix: "sk-",
     minLen: 40,
     docs: "https://platform.openai.com/api-keys",
-    hint: "Starts with sk- or sk-proj-. Create at platform.openai.com/api-keys.",
+    hint: "Optional. Only add if you specifically want to be billed by OpenAI instead of using the built-in gateway.",
+    billedByWorkspace: false,
   },
   {
     id: "anthropic",
-    label: "Anthropic (Claude)",
+    label: "Anthropic (bring your own — you pay Anthropic)",
     secretName: "ANTHROPIC_API_KEY",
     keyPrefix: "sk-ant-",
     minLen: 40,
     docs: "https://console.anthropic.com/settings/keys",
-    hint: "Starts with sk-ant-. Create at console.anthropic.com.",
+    hint: "Optional. Only add if you want to be billed by Anthropic directly.",
+    billedByWorkspace: false,
   },
   {
     id: "groq",
-    label: "Groq",
+    label: "Groq (bring your own — you pay Groq)",
     secretName: "GROQ_API_KEY",
     keyPrefix: "gsk_",
     minLen: 30,
     docs: "https://console.groq.com/keys",
-    hint: "Starts with gsk_. Create at console.groq.com/keys.",
+    hint: "Optional. Only add if you want to be billed by Groq directly.",
+    billedByWorkspace: false,
   },
   {
     id: "openrouter",
-    label: "OpenRouter",
+    label: "OpenRouter (bring your own — you pay OpenRouter)",
     secretName: "OPENROUTER_API_KEY",
     keyPrefix: "sk-or-",
     minLen: 30,
     docs: "https://openrouter.ai/keys",
-    hint: "Starts with sk-or-. Create at openrouter.ai/keys.",
+    hint: "Optional. Only add if you want to be billed by OpenRouter directly.",
+    billedByWorkspace: false,
   },
 ];
+
 
 type ValidationState = { ok: boolean; msg: string };
 
@@ -281,6 +290,11 @@ export function SetupWizard() {
         {step === 2 && (
           <div className="space-y-3">
             <h3 className="font-mono text-sm">Provider credentials</h3>
+            <p className="font-mono text-[11px] text-muted-foreground">
+              The built-in Lovable AI Gateway covers chat, embeddings, images, and speech through
+              your workspace credits. You do not need to bring any third-party key — the other
+              options here would bill <em>you</em> at the provider, not through Lovable.
+            </p>
             <div className="flex flex-wrap gap-2">
               {PROVIDERS.map((p) => (
                 <button
@@ -292,9 +306,12 @@ export function SetupWizard() {
                   className={`px-3 py-1.5 rounded font-mono text-xs border ${
                     providerId === p.id
                       ? "border-primary text-primary bg-primary/10"
+                      : p.billedByWorkspace
+                      ? "border-border text-foreground hover:text-primary"
                       : "border-border text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  {p.billedByWorkspace ? "★ " : ""}
                   {p.label}
                 </button>
               ))}
@@ -314,12 +331,24 @@ export function SetupWizard() {
               <div className="flex items-start gap-2 p-3 border border-primary/30 rounded bg-primary/5">
                 <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" />
                 <div className="font-mono text-[11px]">
-                  Lovable AI Gateway is auto-provisioned. Nothing to enter here.
+                  Built-in and ready. All AI calls in this app route through the Lovable AI Gateway
+                  and are billed to your workspace credits — no external provider account or card
+                  required. Recommended for every deployment.
                 </div>
               </div>
             ) : (
               <>
+                <div className="flex items-start gap-2 p-3 border border-yellow-500/40 rounded bg-yellow-500/5">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5" />
+                  <div className="font-mono text-[11px]">
+                    Optional bring-your-own-key. Every call using this key is billed by{" "}
+                    <strong>{provider.label.split(" ")[0]}</strong> on the account tied to the key
+                    — not through Lovable. Skip this step unless you specifically want that.
+                  </div>
+                </div>
+
                 <div className="space-y-1">
+
                   <Label htmlFor="rawKey" className="font-mono text-xs">
                     Paste key to validate
                   </Label>
