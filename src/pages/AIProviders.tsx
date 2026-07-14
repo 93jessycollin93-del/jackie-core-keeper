@@ -355,17 +355,25 @@ export default function AIProviders() {
                     </a>
                   </div>
                   <p className="text-[11px] text-muted-foreground mb-2">{f.description}</p>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {f.recommendedModels.map((m) => (
-                      <button
-                        key={m}
-                        onClick={() => { switchProvider("ollama"); setModelId(m); }}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-primary/20 text-primary font-mono transition"
-                        title="Load into Ollama tester"
-                      >
-                        {m}
-                      </button>
-                    ))}
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {f.recommendedModels.map((m) => {
+                      // Ollama registry ids; infer against a synthetic ModelDef.
+                      const caps = inferCapabilities("ollama", { id: m, label: m });
+                      return (
+                        <span key={m} className="inline-flex items-center gap-1 rounded bg-secondary px-1.5 py-0.5">
+                          <button
+                            onClick={() => { switchProvider("ollama"); setModelId(m); }}
+                            className="text-[10px] text-primary hover:underline font-mono"
+                            title="Load into Ollama tester"
+                          >
+                            {m}
+                          </button>
+                          {caps.tools && <span className="text-[9px] px-1 rounded bg-cyan-500/20 text-cyan-400">tools</span>}
+                          {caps.json && <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400">json</span>}
+                          {caps.context > 0 && <span className="text-[9px] px-1 rounded bg-indigo-500/20 text-indigo-300">{formatContext(caps.context)}</span>}
+                        </span>
+                      );
+                    })}
                   </div>
                   <Button
                     size="sm"
