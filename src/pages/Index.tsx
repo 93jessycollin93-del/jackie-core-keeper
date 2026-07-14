@@ -162,7 +162,7 @@ const Sidebar = ({
       )}
       <aside
         className={`
-          w-[280px] h-screen border-r border-border bg-sidebar flex-col
+          w-[280px] h-screen border-r border-border bg-sidebar flex-col relative
           hidden md:flex
           ${isMobileOpen ? "!flex fixed inset-y-0 left-0 z-50" : ""}
         `}
