@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PROVIDERS, OLLAMA_AGENTS, FRAMEWORKS, findProvider, type ProviderId } from "@/lib/jackie-providers";
 import { streamProviderChat } from "@/lib/jackie-provider-stream";
+import { streamProviderChatWithFallback, type FallbackAttempt } from "@/lib/jackie-provider-fallback";
 import { inferCapabilities, formatContext } from "@/lib/jackie-model-capabilities";
 import { checkProviderHealth, type HealthResult } from "@/lib/jackie-provider-health";
 import { Button } from "@/components/ui/button";
