@@ -1221,7 +1221,7 @@ Keep it concise but thorough. No hype, no false alarm — just truth.`;
   };
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden relative">
+    <div className="flex h-[calc(100dvh-3.5rem)] md:h-screen bg-background overflow-hidden relative">
       {/* Epic neutron-star ambient backdrop — sits behind everything, low opacity for readability */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <AnimatedCanvas theme={bgSettings.theme} opacity={bgSettings.opacity} glow={bgSettings.glow} />
