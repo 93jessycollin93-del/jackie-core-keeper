@@ -363,9 +363,9 @@ const Sidebar = ({
               </div>
             </div>
           )}
-        </div>
 
-        <div className="p-2 border-t border-border space-y-0.5">
+        <div className="mt-2 pt-2 border-t border-border space-y-0.5">
+
           <a href="/play" className="flex items-center gap-2 px-2 py-2 font-mono text-xs text-primary hover:bg-secondary/50 rounded-sm transition-colors">
             ⚔️ Play Game
           </a>
