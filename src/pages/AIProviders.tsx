@@ -97,10 +97,28 @@ export default function AIProviders() {
                     Needs {p.requiresSecret}
                   </div>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3 w-full h-7 text-[11px] gap-1.5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    runTest({
+                      provider: p.id,
+                      model: p.models[0].id,
+                      prompt: `Reply with exactly: "PONG from ${p.label} · ${p.models[0].id}".`,
+                    });
+                  }}
+                  disabled={running}
+                >
+                  {running && providerId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                  One-click test
+                </Button>
               </Card>
             );
           })}
         </div>
+
 
         {/* Test panel */}
         <Card className="p-4 md:p-6 space-y-4">
