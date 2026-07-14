@@ -133,6 +133,7 @@ const Sidebar = ({
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState<string>("blue");
   const [tagMenuConvId, setTagMenuConvId] = useState<string | null>(null);
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
   const handleSelect = (id: string) => {
     onSelect(id);
     onCloseMobile?.();
