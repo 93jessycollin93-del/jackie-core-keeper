@@ -168,6 +168,8 @@ export interface FrameworkDef {
   category: "graph" | "crew" | "workflow" | "rag" | "kernel";
   description: string;
   docsUrl: string;
+  /** true = verified official docs/repo. false = best-effort search fallback (surface a warning in UI). */
+  officialLink: boolean;
   recommendedModels: string[]; // ollama model ids or names
 }
 
@@ -178,6 +180,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "graph",
     description: "Stateful, graph-based agent orchestration. Best for complex branching workflows.",
     docsUrl: "https://langchain-ai.github.io/langgraph/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:32b", "qwen2.5-coder:32b", "llama3.3:70b", "gemma2:27b", "deepseek-r1:32b"],
   },
   {
@@ -186,6 +189,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "crew",
     description: "Role-playing autonomous AI agents that collaborate as a crew.",
     docsUrl: "https://docs.crewai.com/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:14b", "qwen2.5:32b", "llama3.3:70b", "gemma2:27b", "qwen2.5-coder:32b"],
   },
   {
@@ -194,6 +198,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "workflow",
     description: "Open-source LLMOps platform. Visual workflow + RAG + agents.",
     docsUrl: "https://docs.dify.ai/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "mixtral:8x7b", "gemma2:27b"],
   },
   {
@@ -202,6 +207,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "crew",
     description: "Microsoft's multi-agent conversation framework.",
     docsUrl: "https://microsoft.github.io/autogen/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "mixtral:8x7b", "deepseek-r1:32b"],
   },
   {
@@ -210,6 +216,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "workflow",
     description: "Fair-code workflow automation with AI agent nodes.",
     docsUrl: "https://docs.n8n.io/advanced-ai/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:14b", "llama3.1:8b", "llama3.3:70b", "gemma2:27b"],
   },
   {
@@ -218,14 +225,16 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "rag",
     description: "Data framework for LLM apps. Best-in-class RAG + agents.",
     docsUrl: "https://docs.llamaindex.ai/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "gemma2:27b"],
   },
   {
     id: "openclaw",
     label: "OpenClaw",
     category: "graph",
-    description: "User-requested framework — verify docs URL before wiring. No official Ollama-tagged models yet.",
+    description: "No official project by this name confirmed. The link runs a live GitHub search so you can verify before wiring.",
     docsUrl: "https://github.com/search?q=openclaw+agent&type=repositories",
+    officialLink: false,
     recommendedModels: ["qwen2.5:72b", "llama3.3:70b", "qwen2.5-coder:32b", "deepseek-r1:32b"],
   },
   {
@@ -234,6 +243,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "workflow",
     description: "Drag-and-drop UI to build LangChain / LlamaIndex flows.",
     docsUrl: "https://docs.flowiseai.com/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:14b", "llama3.1:8b", "llama3.3:70b", "gemma2:27b"],
   },
   {
@@ -242,6 +252,7 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "rag",
     description: "deepset's production-ready RAG + agent pipelines.",
     docsUrl: "https://docs.haystack.deepset.ai/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:32b", "llama3.3:70b", "gemma2:27b"],
   },
   {
@@ -250,8 +261,10 @@ export const FRAMEWORKS: FrameworkDef[] = [
     category: "kernel",
     description: "Lightweight code-first agents (HF Smolagents + MS Semantic Kernel).",
     docsUrl: "https://huggingface.co/docs/smolagents/",
+    officialLink: true,
     recommendedModels: ["qwen2.5:7b", "qwen2.5:14b", "gemma2:27b", "llama3.1:8b", "qwen2.5-coder:32b"],
   },
 ];
+
 
 

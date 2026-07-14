@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Zap, Cpu, Cloud, HardDrive, ExternalLink, KeyRound, Play, Loader2, CheckCircle2, Network, Users, Workflow, Database, Blocks } from "lucide-react";
+import { ArrowLeft, Zap, Cpu, Cloud, HardDrive, ExternalLink, KeyRound, Play, Loader2, CheckCircle2, Network, Users, Workflow, Database, Blocks, AlertTriangle, ShieldCheck } from "lucide-react";
 
 const FRAMEWORK_ICONS = {
   graph: Network,
@@ -34,12 +34,20 @@ export default function AIProviders() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const runTest = async () => {
+  const runTest = async (opts?: { provider?: ProviderId; model?: string; prompt?: string }) => {
+    const useProvider = opts?.provider ?? providerId;
+    const useModel = opts?.model ?? modelId;
+    const usePrompt = opts?.prompt ?? prompt;
+    if (opts?.provider && opts.provider !== providerId) setProviderId(opts.provider);
+    if (opts?.model && opts.model !== modelId) setModelId(opts.model);
+    if (opts?.prompt) setPrompt(opts.prompt);
     setRunning(true); setOutput(""); setError(null);
+    // scroll test panel into view
+    document.getElementById("provider-test-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
     await streamProviderChat({
-      provider: providerId,
-      model: modelId,
-      messages: [{ role: "user", content: prompt }],
+      provider: useProvider,
+      model: useModel,
+      messages: [{ role: "user", content: usePrompt }],
       system: "You are Jackie. Respond concisely.",
       onDelta: (t) => setOutput((o) => o + t),
       onDone: () => setRunning(false),
@@ -53,6 +61,7 @@ export default function AIProviders() {
     setModelId(p.models[0].id);
     setOutput(""); setError(null);
   };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
@@ -88,13 +97,32 @@ export default function AIProviders() {
                     Needs {p.requiresSecret}
                   </div>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3 w-full h-7 text-[11px] gap-1.5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    runTest({
+                      provider: p.id,
+                      model: p.models[0].id,
+                      prompt: `Reply with exactly: "PONG from ${p.label} · ${p.models[0].id}".`,
+                    });
+                  }}
+                  disabled={running}
+                >
+                  {running && providerId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                  One-click test
+                </Button>
               </Card>
             );
           })}
         </div>
 
+
         {/* Test panel */}
-        <Card className="p-4 md:p-6 space-y-4">
+        <Card id="provider-test-panel" className="p-4 md:p-6 space-y-4 scroll-mt-4">
+
           <div className="flex flex-wrap items-center gap-3 justify-between">
             <div>
               <h2 className="font-semibold">Test: {provider.label}</h2>
@@ -131,7 +159,7 @@ export default function AIProviders() {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button onClick={runTest} disabled={running} className="w-full gap-2">
+              <Button onClick={() => runTest()} disabled={running} className="w-full gap-2">
                 {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                 {running ? "Streaming..." : "Run test"}
               </Button>
@@ -207,13 +235,22 @@ export default function AIProviders() {
                     <div className="flex items-center gap-2">
                       <Icon className="w-3.5 h-3.5 text-primary" />
                       <span className="font-mono text-sm font-semibold">{f.label}</span>
+                      {f.officialLink ? (
+                        <span title="Verified official docs/repo" className="inline-flex items-center gap-0.5 text-[9px] text-green-500">
+                          <ShieldCheck className="w-2.5 h-2.5" /> official
+                        </span>
+                      ) : (
+                        <span title="Best-effort search — not an official project link" className="inline-flex items-center gap-0.5 text-[9px] text-amber-500">
+                          <AlertTriangle className="w-2.5 h-2.5" /> search only
+                        </span>
+                      )}
                     </div>
                     <a href={f.docsUrl} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline flex items-center gap-1">
-                      docs <ExternalLink className="w-2.5 h-2.5" />
+                      {f.officialLink ? "docs" : "search"} <ExternalLink className="w-2.5 h-2.5" />
                     </a>
                   </div>
                   <p className="text-[11px] text-muted-foreground mb-2">{f.description}</p>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 mb-2">
                     {f.recommendedModels.map((m) => (
                       <button
                         key={m}
@@ -225,7 +262,22 @@ export default function AIProviders() {
                       </button>
                     ))}
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-7 text-[11px] gap-1.5"
+                    onClick={() => runTest({
+                      provider: "ollama",
+                      model: f.recommendedModels[0],
+                      prompt: `You are simulating an agent inside the ${f.label} framework. In one short sentence, describe how you would decompose the task "summarize a 3-page PDF" using ${f.label}. End with the exact token OK-${f.id.toUpperCase()}.`,
+                    })}
+                    disabled={running}
+                  >
+                    {running ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                    One-click test · {f.recommendedModels[0]}
+                  </Button>
                 </div>
+
               );
             })}
           </div>
