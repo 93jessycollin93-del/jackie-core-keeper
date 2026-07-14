@@ -167,7 +167,16 @@ export default function AIProviders() {
             <Activity className="w-3.5 h-3.5 text-primary" />
             Provider health — pings each endpoint with a minimal prompt before you test.
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none border border-border rounded px-2 h-8">
+              <input
+                type="checkbox"
+                checked={autoFallback}
+                onChange={(e) => setAutoFallback(e.target.checked)}
+                className="accent-primary"
+              />
+              Auto-fallback (Ollama → Groq → OpenRouter → Lovable)
+            </label>
             <Link to="/secrets-audit">
               <Button size="sm" variant="ghost" className="gap-1.5 h-8 border border-border">
                 <ShieldCheck className="w-3.5 h-3.5" />
