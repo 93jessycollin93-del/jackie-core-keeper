@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { PROVIDERS, OLLAMA_AGENTS, FRAMEWORKS, type ProviderId } from "@/lib/jackie-providers";
+import { PROVIDERS, OLLAMA_AGENTS, FRAMEWORKS, findProvider, type ProviderId } from "@/lib/jackie-providers";
 import { streamProviderChat } from "@/lib/jackie-provider-stream";
+import { inferCapabilities, formatContext } from "@/lib/jackie-model-capabilities";
+import { checkProviderHealth, type HealthResult } from "@/lib/jackie-provider-health";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Zap, Cpu, Cloud, HardDrive, ExternalLink, KeyRound, Play, Loader2, CheckCircle2, Network, Users, Workflow, Database, Blocks, AlertTriangle, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Zap, Cpu, Cloud, HardDrive, ExternalLink, KeyRound, Play, Loader2, CheckCircle2, Network, Users, Workflow, Database, Blocks, AlertTriangle, ShieldCheck, Activity, Radio } from "lucide-react";
 
 const FRAMEWORK_ICONS = {
   graph: Network,
@@ -16,6 +18,29 @@ const FRAMEWORK_ICONS = {
   rag: Database,
   kernel: Blocks,
 } as const;
+
+function CapChips({ provider, modelId }: { provider: ProviderId; modelId: string }) {
+  const def = findProvider(provider);
+  const m = def?.models.find((x) => x.id === modelId);
+  if (!m) return null;
+  const c = inferCapabilities(provider, m);
+  return (
+    <span className="inline-flex flex-wrap gap-1 items-center">
+      {c.chat && <span className="text-[9px] px-1 rounded bg-slate-500/20 text-slate-300" title="Chat completions">chat</span>}
+      {c.tools && <span className="text-[9px] px-1 rounded bg-cyan-500/20 text-cyan-400" title="Function / tool calling">tools</span>}
+      {c.json && <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400" title="Structured JSON output">json</span>}
+      {c.context > 0 && <span className="text-[9px] px-1 rounded bg-indigo-500/20 text-indigo-300" title="Approx context window">{formatContext(c.context)}ctx</span>}
+    </span>
+  );
+}
+
+const STATUS_STYLE: Record<HealthResult["status"], string> = {
+  idle: "text-muted-foreground",
+  checking: "text-blue-400",
+  ok: "text-green-500",
+  degraded: "text-amber-500",
+  error: "text-red-400",
+};
 
 
 const ICONS: Record<ProviderId, typeof Zap> = {
@@ -33,6 +58,24 @@ export default function AIProviders() {
   const [output, setOutput] = useState("");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [health, setHealth] = useState<Record<ProviderId, HealthResult>>({
+    lovable: { status: "idle" },
+    groq: { status: "idle" },
+    openrouter: { status: "idle" },
+    ollama: { status: "idle" },
+  });
+
+  const pingProvider = async (id: ProviderId) => {
+    const p = PROVIDERS.find((x) => x.id === id)!;
+    setHealth((h) => ({ ...h, [id]: { status: "checking" } }));
+    const res = await checkProviderHealth({ provider: id, model: p.models[0].id });
+    setHealth((h) => ({ ...h, [id]: res }));
+    return res;
+  };
+
+  const pingAll = async () => {
+    await Promise.all(PROVIDERS.map((p) => pingProvider(p.id)));
+  };
 
   const runTest = async (opts?: { provider?: ProviderId; model?: string; prompt?: string }) => {
     const useProvider = opts?.provider ?? providerId;
@@ -42,8 +85,21 @@ export default function AIProviders() {
     if (opts?.model && opts.model !== modelId) setModelId(opts.model);
     if (opts?.prompt) setPrompt(opts.prompt);
     setRunning(true); setOutput(""); setError(null);
-    // scroll test panel into view
     document.getElementById("provider-test-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // Health check gate — ping if we don't already have a fresh signal.
+    const current = health[useProvider];
+    if (!current || current.status === "idle" || current.status === "error") {
+      setHealth((h) => ({ ...h, [useProvider]: { status: "checking" } }));
+      const res = await checkProviderHealth({ provider: useProvider, model: useModel });
+      setHealth((h) => ({ ...h, [useProvider]: res }));
+      if (res.status === "error") {
+        setError(`Health check failed before test: ${res.error ?? "unknown"}`);
+        setRunning(false);
+        return;
+      }
+    }
+
     await streamProviderChat({
       provider: useProvider,
       model: useModel,
@@ -74,11 +130,30 @@ export default function AIProviders() {
           </div>
         </div>
 
+        {/* Health check bar */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Activity className="w-3.5 h-3.5 text-primary" />
+            Provider health — pings each endpoint with a minimal prompt before you test.
+          </div>
+          <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={pingAll}>
+            <Radio className="w-3.5 h-3.5" />
+            Ping all
+          </Button>
+        </div>
+
         {/* Provider grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
           {PROVIDERS.map((p) => {
             const Icon = ICONS[p.id];
             const active = p.id === providerId;
+            const h = health[p.id];
+            const dot =
+              h.status === "ok" ? "bg-green-500" :
+              h.status === "degraded" ? "bg-amber-500" :
+              h.status === "error" ? "bg-red-500" :
+              h.status === "checking" ? "bg-blue-500 animate-pulse" :
+              "bg-muted-foreground/40";
             return (
               <Card
                 key={p.id}
@@ -87,33 +162,57 @@ export default function AIProviders() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <Icon className={`w-5 h-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
-                  {p.free && <Badge variant="secondary" className="text-[10px]">FREE TIER</Badge>}
+                  <div className="flex items-center gap-1.5">
+                    <span className={`inline-block w-2 h-2 rounded-full ${dot}`} title={`Health: ${h.status}`} />
+                    {p.free && <Badge variant="secondary" className="text-[10px]">FREE</Badge>}
+                  </div>
                 </div>
                 <h3 className="font-semibold text-sm">{p.label}</h3>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{p.description}</p>
+
+                <div className={`mt-2 text-[10px] ${STATUS_STYLE[h.status]}`}>
+                  {h.status === "idle" && "health: not checked"}
+                  {h.status === "checking" && "pinging…"}
+                  {h.status === "ok" && `ok · ${h.latencyMs}ms`}
+                  {h.status === "degraded" && `degraded · ${h.latencyMs}ms`}
+                  {h.status === "error" && `error · ${h.error?.slice(0, 60) ?? ""}`}
+                </div>
+
                 {p.requiresSecret && (
-                  <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5 text-[11px] text-amber-500">
+                  <div className="mt-2 pt-2 border-t border-border flex items-center gap-1.5 text-[11px] text-amber-500">
                     <KeyRound className="w-3 h-3" />
                     Needs {p.requiresSecret}
                   </div>
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-3 w-full h-7 text-[11px] gap-1.5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    runTest({
-                      provider: p.id,
-                      model: p.models[0].id,
-                      prompt: `Reply with exactly: "PONG from ${p.label} · ${p.models[0].id}".`,
-                    });
-                  }}
-                  disabled={running}
-                >
-                  {running && providerId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                  One-click test
-                </Button>
+                <div className="mt-3 grid grid-cols-2 gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-[11px] gap-1 border border-border"
+                    onClick={(e) => { e.stopPropagation(); pingProvider(p.id); }}
+                    disabled={h.status === "checking"}
+                  >
+                    {h.status === "checking" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Radio className="w-3 h-3" />}
+                    Ping
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      runTest({
+                        provider: p.id,
+                        model: p.models[0].id,
+                        prompt: `Reply with exactly: "PONG from ${p.label} · ${p.models[0].id}".`,
+                      });
+                    }}
+                    disabled={running}
+                  >
+                    {running && providerId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                    Test
+                  </Button>
+                </div>
               </Card>
             );
           })}
@@ -144,17 +243,23 @@ export default function AIProviders() {
               <Select value={modelId} onValueChange={setModelId}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {provider.models.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      <div className="flex items-center gap-2">
-                        {m.label}
-                        {m.free && <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-500">FREE</span>}
-                        {m.vision && <span className="text-[9px] px-1 rounded bg-blue-500/20 text-blue-500">VISION</span>}
-                        {m.reasoning && <span className="text-[9px] px-1 rounded bg-purple-500/20 text-purple-500">R1</span>}
-                        {m.note && <span className="text-[9px] text-muted-foreground">· {m.note}</span>}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {provider.models.map((m) => {
+                    const c = inferCapabilities(providerId, m);
+                    return (
+                      <SelectItem key={m.id} value={m.id}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {m.label}
+                          {m.free && <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-500">FREE</span>}
+                          {m.vision && <span className="text-[9px] px-1 rounded bg-blue-500/20 text-blue-500">VISION</span>}
+                          {m.reasoning && <span className="text-[9px] px-1 rounded bg-purple-500/20 text-purple-500">R1</span>}
+                          {c.tools && <span className="text-[9px] px-1 rounded bg-cyan-500/20 text-cyan-400">tools</span>}
+                          {c.json && <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400">json</span>}
+                          {c.context > 0 && <span className="text-[9px] px-1 rounded bg-indigo-500/20 text-indigo-300">{formatContext(c.context)}ctx</span>}
+                          {m.note && <span className="text-[9px] text-muted-foreground">· {m.note}</span>}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -250,17 +355,25 @@ export default function AIProviders() {
                     </a>
                   </div>
                   <p className="text-[11px] text-muted-foreground mb-2">{f.description}</p>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {f.recommendedModels.map((m) => (
-                      <button
-                        key={m}
-                        onClick={() => { switchProvider("ollama"); setModelId(m); }}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-primary/20 text-primary font-mono transition"
-                        title="Load into Ollama tester"
-                      >
-                        {m}
-                      </button>
-                    ))}
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {f.recommendedModels.map((m) => {
+                      // Ollama registry ids; infer against a synthetic ModelDef.
+                      const caps = inferCapabilities("ollama", { id: m, label: m });
+                      return (
+                        <span key={m} className="inline-flex items-center gap-1 rounded bg-secondary px-1.5 py-0.5">
+                          <button
+                            onClick={() => { switchProvider("ollama"); setModelId(m); }}
+                            className="text-[10px] text-primary hover:underline font-mono"
+                            title="Load into Ollama tester"
+                          >
+                            {m}
+                          </button>
+                          {caps.tools && <span className="text-[9px] px-1 rounded bg-cyan-500/20 text-cyan-400">tools</span>}
+                          {caps.json && <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400">json</span>}
+                          {caps.context > 0 && <span className="text-[9px] px-1 rounded bg-indigo-500/20 text-indigo-300">{formatContext(caps.context)}</span>}
+                        </span>
+                      );
+                    })}
                   </div>
                   <Button
                     size="sm"
