@@ -89,22 +89,36 @@ export default function AIProviders() {
     if (opts?.model && opts.model !== modelId) setModelId(opts.model);
     if (opts?.prompt) setPrompt(opts.prompt);
     setRunning(true); setOutput(""); setError(null);
+    setFallbackTrail([]);
+    setActiveProvider(useProvider);
     document.getElementById("provider-test-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-    // Health check gate — ping if we don't already have a fresh signal.
-    const current = health[useProvider];
-    if (!current || current.status === "idle" || current.status === "error") {
-      setHealth((h) => ({ ...h, [useProvider]: { status: "checking" } }));
-      const res = await checkProviderHealth({ provider: useProvider, model: useModel });
-      setHealth((h) => ({ ...h, [useProvider]: res }));
-      if (res.status === "error") {
-        setError(`Health check failed before test: ${res.error ?? "unknown"}`);
-        setRunning(false);
-        return;
+    // Skip pre-flight health gate when auto-fallback is on — fallback handles failures.
+    if (!autoFallback) {
+      const current = health[useProvider];
+      if (!current || current.status === "idle" || current.status === "error") {
+        setHealth((h) => ({ ...h, [useProvider]: { status: "checking" } }));
+        const res = await checkProviderHealth({ provider: useProvider, model: useModel });
+        setHealth((h) => ({ ...h, [useProvider]: res }));
+        if (res.status === "error") {
+          setError(`Health check failed before test: ${res.error ?? "unknown"}`);
+          setRunning(false);
+          return;
+        }
       }
+      await streamProviderChat({
+        provider: useProvider,
+        model: useModel,
+        messages: [{ role: "user", content: usePrompt }],
+        system: "You are Jackie. Respond concisely.",
+        onDelta: (t) => setOutput((o) => o + t),
+        onDone: () => setRunning(false),
+        onError: (e) => { setError(e); setRunning(false); },
+      });
+      return;
     }
 
-    await streamProviderChat({
+    await streamProviderChatWithFallback({
       provider: useProvider,
       model: useModel,
       messages: [{ role: "user", content: usePrompt }],
@@ -112,6 +126,19 @@ export default function AIProviders() {
       onDelta: (t) => setOutput((o) => o + t),
       onDone: () => setRunning(false),
       onError: (e) => { setError(e); setRunning(false); },
+      onProviderChange: (p, m) => {
+        setActiveProvider(p);
+        setHealth((h) => ({ ...h, [p]: h[p].status === "idle" ? { status: "checking" } : h[p] }));
+      },
+      onAttempt: (a) => {
+        setFallbackTrail((t) => [...t, a]);
+        setHealth((h) => ({
+          ...h,
+          [a.provider]: a.ok
+            ? { status: "ok", latencyMs: h[a.provider].latencyMs ?? 0 }
+            : { status: "error", error: a.error },
+        }));
+      },
     });
   };
 
