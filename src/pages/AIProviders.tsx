@@ -85,8 +85,21 @@ export default function AIProviders() {
     if (opts?.model && opts.model !== modelId) setModelId(opts.model);
     if (opts?.prompt) setPrompt(opts.prompt);
     setRunning(true); setOutput(""); setError(null);
-    // scroll test panel into view
     document.getElementById("provider-test-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // Health check gate — ping if we don't already have a fresh signal.
+    const current = health[useProvider];
+    if (!current || current.status === "idle" || current.status === "error") {
+      setHealth((h) => ({ ...h, [useProvider]: { status: "checking" } }));
+      const res = await checkProviderHealth({ provider: useProvider, model: useModel });
+      setHealth((h) => ({ ...h, [useProvider]: res }));
+      if (res.status === "error") {
+        setError(`Health check failed before test: ${res.error ?? "unknown"}`);
+        setRunning(false);
+        return;
+      }
+    }
+
     await streamProviderChat({
       provider: useProvider,
       model: useModel,
