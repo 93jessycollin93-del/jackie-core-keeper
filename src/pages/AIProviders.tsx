@@ -202,12 +202,16 @@ export default function AIProviders() {
               h.status === "error" ? "bg-red-500" :
               h.status === "checking" ? "bg-blue-500 animate-pulse" :
               "bg-muted-foreground/40";
+            const isActive = activeProvider === p.id && running;
             return (
               <Card
                 key={p.id}
                 onClick={() => switchProvider(p.id)}
-                className={`p-4 cursor-pointer transition border ${active ? "border-primary bg-primary/5" : "hover:border-primary/40"}`}
+                className={`p-4 cursor-pointer transition border relative ${active ? "border-primary bg-primary/5" : "hover:border-primary/40"} ${isActive ? "ring-2 ring-primary/60" : ""}`}
               >
+                {isActive && (
+                  <span className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-mono">ROUTING</span>
+                )}
                 <div className="flex items-start justify-between mb-2">
                   <Icon className={`w-5 h-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
                   <div className="flex items-center gap-1.5">
