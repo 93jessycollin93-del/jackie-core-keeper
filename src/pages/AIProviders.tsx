@@ -140,7 +140,7 @@ export default function AIProviders() {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button onClick={runTest} disabled={running} className="w-full gap-2">
+              <Button onClick={() => runTest()} disabled={running} className="w-full gap-2">
                 {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                 {running ? "Streaming..." : "Run test"}
               </Button>
