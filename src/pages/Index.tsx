@@ -240,7 +240,7 @@ const Sidebar = ({
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+        <div ref={sidebarScrollRef} className="flex-1 overflow-y-auto p-2 space-y-0.5 scroll-smooth">
           <div className="px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground flex items-center justify-between">
             <span>Conversations {(searchQuery || activeTagFilter) && `(${filtered.length})`}</span>
           </div>
