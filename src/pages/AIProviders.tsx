@@ -65,6 +65,9 @@ export default function AIProviders() {
     openrouter: { status: "idle" },
     ollama: { status: "idle" },
   });
+  const [autoFallback, setAutoFallback] = useState(true);
+  const [fallbackTrail, setFallbackTrail] = useState<FallbackAttempt[]>([]);
+  const [activeProvider, setActiveProvider] = useState<ProviderId | null>(null);
 
   const pingProvider = async (id: ProviderId) => {
     const p = PROVIDERS.find((x) => x.id === id)!;
