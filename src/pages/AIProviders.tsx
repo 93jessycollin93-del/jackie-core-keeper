@@ -326,6 +326,20 @@ export default function AIProviders() {
             className="font-mono text-xs"
           />
 
+          {fallbackTrail.length > 0 && (
+            <div className="rounded-lg border border-border bg-background/60 p-2 text-[11px] font-mono space-y-1">
+              <div className="text-muted-foreground">Fallback trail{activeProvider ? ` · active: ${activeProvider}` : ""}</div>
+              {fallbackTrail.map((a, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className={a.ok ? "text-green-500" : "text-red-400"}>{a.ok ? "✔" : "✖"}</span>
+                  <span className="text-primary">{a.provider}</span>
+                  <span className="text-muted-foreground">{a.model}</span>
+                  {!a.ok && a.error && <span className="text-red-400 truncate">— {a.error}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="rounded-lg border border-border bg-secondary/40 p-3 min-h-[140px]">
             {error ? (
               <div className="text-xs text-red-400 font-mono whitespace-pre-wrap">{error}</div>
