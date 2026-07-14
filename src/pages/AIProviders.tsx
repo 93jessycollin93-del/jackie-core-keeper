@@ -235,13 +235,22 @@ export default function AIProviders() {
                     <div className="flex items-center gap-2">
                       <Icon className="w-3.5 h-3.5 text-primary" />
                       <span className="font-mono text-sm font-semibold">{f.label}</span>
+                      {f.officialLink ? (
+                        <span title="Verified official docs/repo" className="inline-flex items-center gap-0.5 text-[9px] text-green-500">
+                          <ShieldCheck className="w-2.5 h-2.5" /> official
+                        </span>
+                      ) : (
+                        <span title="Best-effort search — not an official project link" className="inline-flex items-center gap-0.5 text-[9px] text-amber-500">
+                          <AlertTriangle className="w-2.5 h-2.5" /> search only
+                        </span>
+                      )}
                     </div>
                     <a href={f.docsUrl} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline flex items-center gap-1">
-                      docs <ExternalLink className="w-2.5 h-2.5" />
+                      {f.officialLink ? "docs" : "search"} <ExternalLink className="w-2.5 h-2.5" />
                     </a>
                   </div>
                   <p className="text-[11px] text-muted-foreground mb-2">{f.description}</p>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 mb-2">
                     {f.recommendedModels.map((m) => (
                       <button
                         key={m}
@@ -253,7 +262,22 @@ export default function AIProviders() {
                       </button>
                     ))}
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-7 text-[11px] gap-1.5"
+                    onClick={() => runTest({
+                      provider: "ollama",
+                      model: f.recommendedModels[0],
+                      prompt: `You are simulating an agent inside the ${f.label} framework. In one short sentence, describe how you would decompose the task "summarize a 3-page PDF" using ${f.label}. End with the exact token OK-${f.id.toUpperCase()}.`,
+                    })}
+                    disabled={running}
+                  >
+                    {running ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                    One-click test · {f.recommendedModels[0]}
+                  </Button>
                 </div>
+
               );
             })}
           </div>
