@@ -82,7 +82,15 @@ serve(async (req) => {
     const { messages, model, system } = await req.json();
     const selected = model || "llama3.2:3b";
     const optionalKey = Deno.env.get("OLLAMA_API_KEY");
-    const resp = await fetch(`${base.replace(/\/$/, "")}/api/chat`, {
+    // Normalize base URL: strip trailing slashes, /api, /api/chat, /v1 so users
+    // can paste any common form (e.g. http://host:11434, .../api, .../api/chat).
+    const normalizedBase = base
+      .trim()
+      .replace(/\/+$/, "")
+      .replace(/\/api\/chat$/i, "")
+      .replace(/\/api$/i, "")
+      .replace(/\/v1$/i, "");
+    const resp = await fetch(`${normalizedBase}/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
