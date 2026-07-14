@@ -58,6 +58,24 @@ export default function AIProviders() {
   const [output, setOutput] = useState("");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [health, setHealth] = useState<Record<ProviderId, HealthResult>>({
+    lovable: { status: "idle" },
+    groq: { status: "idle" },
+    openrouter: { status: "idle" },
+    ollama: { status: "idle" },
+  });
+
+  const pingProvider = async (id: ProviderId) => {
+    const p = PROVIDERS.find((x) => x.id === id)!;
+    setHealth((h) => ({ ...h, [id]: { status: "checking" } }));
+    const res = await checkProviderHealth({ provider: id, model: p.models[0].id });
+    setHealth((h) => ({ ...h, [id]: res }));
+    return res;
+  };
+
+  const pingAll = async () => {
+    await Promise.all(PROVIDERS.map((p) => pingProvider(p.id)));
+  };
 
   const runTest = async (opts?: { provider?: ProviderId; model?: string; prompt?: string }) => {
     const useProvider = opts?.provider ?? providerId;
