@@ -130,7 +130,7 @@ export const IndexFinder = () => {
     return (
       <button
         onClick={() => setMode("palette")}
-        className="fixed bottom-20 right-3 z-50 group flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-neutral-900/95 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.25)] backdrop-blur hover:border-emerald-400/60 transition-all"
+        className="fixed bottom-[7.5rem] right-3 z-50 group flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-neutral-900/95 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.25)] backdrop-blur hover:border-emerald-400/60 transition-all"
         aria-label="Open INDEX-01"
       >
         <span className="relative flex">
@@ -145,7 +145,7 @@ export const IndexFinder = () => {
 
   // ---------- EXPANDED PANEL ----------
   return (
-    <div className="fixed bottom-20 right-3 left-3 sm:left-auto sm:w-[380px] z-50">
+    <div className="fixed bottom-[7.5rem] right-3 left-3 sm:left-auto sm:w-[380px] z-50">
       <div className="rounded-2xl bg-neutral-950/95 border border-emerald-500/25 shadow-[0_0_40px_rgba(16,185,129,0.15)] backdrop-blur-xl overflow-hidden">
         {/* header */}
         <div className="flex items-center justify-between px-3.5 py-3 border-b border-neutral-800">
