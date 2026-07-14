@@ -34,12 +34,20 @@ export default function AIProviders() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const runTest = async () => {
+  const runTest = async (opts?: { provider?: ProviderId; model?: string; prompt?: string }) => {
+    const useProvider = opts?.provider ?? providerId;
+    const useModel = opts?.model ?? modelId;
+    const usePrompt = opts?.prompt ?? prompt;
+    if (opts?.provider && opts.provider !== providerId) setProviderId(opts.provider);
+    if (opts?.model && opts.model !== modelId) setModelId(opts.model);
+    if (opts?.prompt) setPrompt(opts.prompt);
     setRunning(true); setOutput(""); setError(null);
+    // scroll test panel into view
+    document.getElementById("provider-test-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
     await streamProviderChat({
-      provider: providerId,
-      model: modelId,
-      messages: [{ role: "user", content: prompt }],
+      provider: useProvider,
+      model: useModel,
+      messages: [{ role: "user", content: usePrompt }],
       system: "You are Jackie. Respond concisely.",
       onDelta: (t) => setOutput((o) => o + t),
       onDone: () => setRunning(false),
@@ -53,6 +61,7 @@ export default function AIProviders() {
     setModelId(p.models[0].id);
     setOutput(""); setError(null);
   };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
