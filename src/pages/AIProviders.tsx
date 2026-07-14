@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { PROVIDERS, OLLAMA_AGENTS, FRAMEWORKS, type ProviderId } from "@/lib/jackie-providers";
+import { PROVIDERS, OLLAMA_AGENTS, FRAMEWORKS, findProvider, type ProviderId } from "@/lib/jackie-providers";
 import { streamProviderChat } from "@/lib/jackie-provider-stream";
+import { inferCapabilities, formatContext } from "@/lib/jackie-model-capabilities";
+import { checkProviderHealth, type HealthResult } from "@/lib/jackie-provider-health";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Zap, Cpu, Cloud, HardDrive, ExternalLink, KeyRound, Play, Loader2, CheckCircle2, Network, Users, Workflow, Database, Blocks, AlertTriangle, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Zap, Cpu, Cloud, HardDrive, ExternalLink, KeyRound, Play, Loader2, CheckCircle2, Network, Users, Workflow, Database, Blocks, AlertTriangle, ShieldCheck, Activity, Radio } from "lucide-react";
 
 const FRAMEWORK_ICONS = {
   graph: Network,
@@ -16,6 +18,29 @@ const FRAMEWORK_ICONS = {
   rag: Database,
   kernel: Blocks,
 } as const;
+
+function CapChips({ provider, modelId }: { provider: ProviderId; modelId: string }) {
+  const def = findProvider(provider);
+  const m = def?.models.find((x) => x.id === modelId);
+  if (!m) return null;
+  const c = inferCapabilities(provider, m);
+  return (
+    <span className="inline-flex flex-wrap gap-1 items-center">
+      {c.chat && <span className="text-[9px] px-1 rounded bg-slate-500/20 text-slate-300" title="Chat completions">chat</span>}
+      {c.tools && <span className="text-[9px] px-1 rounded bg-cyan-500/20 text-cyan-400" title="Function / tool calling">tools</span>}
+      {c.json && <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400" title="Structured JSON output">json</span>}
+      {c.context > 0 && <span className="text-[9px] px-1 rounded bg-indigo-500/20 text-indigo-300" title="Approx context window">{formatContext(c.context)}ctx</span>}
+    </span>
+  );
+}
+
+const STATUS_STYLE: Record<HealthResult["status"], string> = {
+  idle: "text-muted-foreground",
+  checking: "text-blue-400",
+  ok: "text-green-500",
+  degraded: "text-amber-500",
+  error: "text-red-400",
+};
 
 
 const ICONS: Record<ProviderId, typeof Zap> = {
