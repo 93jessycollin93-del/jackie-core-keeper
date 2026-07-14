@@ -121,7 +121,8 @@ export default function AIProviders() {
 
 
         {/* Test panel */}
-        <Card className="p-4 md:p-6 space-y-4">
+        <Card id="provider-test-panel" className="p-4 md:p-6 space-y-4 scroll-mt-4">
+
           <div className="flex flex-wrap items-center gap-3 justify-between">
             <div>
               <h2 className="font-semibold">Test: {provider.label}</h2>
