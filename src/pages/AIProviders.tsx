@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PROVIDERS, OLLAMA_AGENTS, FRAMEWORKS, findProvider, type ProviderId } from "@/lib/jackie-providers";
 import { streamProviderChat } from "@/lib/jackie-provider-stream";
+import { streamProviderChatWithFallback, type FallbackAttempt } from "@/lib/jackie-provider-fallback";
 import { inferCapabilities, formatContext } from "@/lib/jackie-model-capabilities";
 import { checkProviderHealth, type HealthResult } from "@/lib/jackie-provider-health";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,9 @@ export default function AIProviders() {
     openrouter: { status: "idle" },
     ollama: { status: "idle" },
   });
+  const [autoFallback, setAutoFallback] = useState(true);
+  const [fallbackTrail, setFallbackTrail] = useState<FallbackAttempt[]>([]);
+  const [activeProvider, setActiveProvider] = useState<ProviderId | null>(null);
 
   const pingProvider = async (id: ProviderId) => {
     const p = PROVIDERS.find((x) => x.id === id)!;
@@ -85,22 +89,36 @@ export default function AIProviders() {
     if (opts?.model && opts.model !== modelId) setModelId(opts.model);
     if (opts?.prompt) setPrompt(opts.prompt);
     setRunning(true); setOutput(""); setError(null);
+    setFallbackTrail([]);
+    setActiveProvider(useProvider);
     document.getElementById("provider-test-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-    // Health check gate — ping if we don't already have a fresh signal.
-    const current = health[useProvider];
-    if (!current || current.status === "idle" || current.status === "error") {
-      setHealth((h) => ({ ...h, [useProvider]: { status: "checking" } }));
-      const res = await checkProviderHealth({ provider: useProvider, model: useModel });
-      setHealth((h) => ({ ...h, [useProvider]: res }));
-      if (res.status === "error") {
-        setError(`Health check failed before test: ${res.error ?? "unknown"}`);
-        setRunning(false);
-        return;
+    // Skip pre-flight health gate when auto-fallback is on — fallback handles failures.
+    if (!autoFallback) {
+      const current = health[useProvider];
+      if (!current || current.status === "idle" || current.status === "error") {
+        setHealth((h) => ({ ...h, [useProvider]: { status: "checking" } }));
+        const res = await checkProviderHealth({ provider: useProvider, model: useModel });
+        setHealth((h) => ({ ...h, [useProvider]: res }));
+        if (res.status === "error") {
+          setError(`Health check failed before test: ${res.error ?? "unknown"}`);
+          setRunning(false);
+          return;
+        }
       }
+      await streamProviderChat({
+        provider: useProvider,
+        model: useModel,
+        messages: [{ role: "user", content: usePrompt }],
+        system: "You are Jackie. Respond concisely.",
+        onDelta: (t) => setOutput((o) => o + t),
+        onDone: () => setRunning(false),
+        onError: (e) => { setError(e); setRunning(false); },
+      });
+      return;
     }
 
-    await streamProviderChat({
+    await streamProviderChatWithFallback({
       provider: useProvider,
       model: useModel,
       messages: [{ role: "user", content: usePrompt }],
@@ -108,6 +126,19 @@ export default function AIProviders() {
       onDelta: (t) => setOutput((o) => o + t),
       onDone: () => setRunning(false),
       onError: (e) => { setError(e); setRunning(false); },
+      onProviderChange: (p, m) => {
+        setActiveProvider(p);
+        setHealth((h) => ({ ...h, [p]: h[p].status === "idle" ? { status: "checking" } : h[p] }));
+      },
+      onAttempt: (a) => {
+        setFallbackTrail((t) => [...t, a]);
+        setHealth((h) => ({
+          ...h,
+          [a.provider]: a.ok
+            ? { status: "ok", latencyMs: h[a.provider].latencyMs ?? 0 }
+            : { status: "error", error: a.error },
+        }));
+      },
     });
   };
 
@@ -136,7 +167,16 @@ export default function AIProviders() {
             <Activity className="w-3.5 h-3.5 text-primary" />
             Provider health — pings each endpoint with a minimal prompt before you test.
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none border border-border rounded px-2 h-8">
+              <input
+                type="checkbox"
+                checked={autoFallback}
+                onChange={(e) => setAutoFallback(e.target.checked)}
+                className="accent-primary"
+              />
+              Auto-fallback (Ollama → Groq → OpenRouter → Lovable)
+            </label>
             <Link to="/secrets-audit">
               <Button size="sm" variant="ghost" className="gap-1.5 h-8 border border-border">
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -162,12 +202,16 @@ export default function AIProviders() {
               h.status === "error" ? "bg-red-500" :
               h.status === "checking" ? "bg-blue-500 animate-pulse" :
               "bg-muted-foreground/40";
+            const isActive = activeProvider === p.id && running;
             return (
               <Card
                 key={p.id}
                 onClick={() => switchProvider(p.id)}
-                className={`p-4 cursor-pointer transition border ${active ? "border-primary bg-primary/5" : "hover:border-primary/40"}`}
+                className={`p-4 cursor-pointer transition border relative ${active ? "border-primary bg-primary/5" : "hover:border-primary/40"} ${isActive ? "ring-2 ring-primary/60" : ""}`}
               >
+                {isActive && (
+                  <span className="absolute top-1.5 right-1.5 text-[9px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-mono">ROUTING</span>
+                )}
                 <div className="flex items-start justify-between mb-2">
                   <Icon className={`w-5 h-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
                   <div className="flex items-center gap-1.5">
@@ -285,6 +329,20 @@ export default function AIProviders() {
             rows={2}
             className="font-mono text-xs"
           />
+
+          {fallbackTrail.length > 0 && (
+            <div className="rounded-lg border border-border bg-background/60 p-2 text-[11px] font-mono space-y-1">
+              <div className="text-muted-foreground">Fallback trail{activeProvider ? ` · active: ${activeProvider}` : ""}</div>
+              {fallbackTrail.map((a, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className={a.ok ? "text-green-500" : "text-red-400"}>{a.ok ? "✔" : "✖"}</span>
+                  <span className="text-primary">{a.provider}</span>
+                  <span className="text-muted-foreground">{a.model}</span>
+                  {!a.ok && a.error && <span className="text-red-400 truncate">— {a.error}</span>}
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="rounded-lg border border-border bg-secondary/40 p-3 min-h-[140px]">
             {error ? (
