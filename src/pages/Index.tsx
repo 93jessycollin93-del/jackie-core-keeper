@@ -454,8 +454,12 @@ const Sidebar = ({
             </div>
           ))}
         </div>
+        </div>
+
+        <ScrollNav targetRef={sidebarScrollRef} />
 
         <div className="p-4 border-t border-border space-y-2">
+
           <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70 flex items-center gap-1.5">
             <ArchiveIcon size={10} /> Archive
           </div>
