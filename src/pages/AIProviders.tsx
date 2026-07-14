@@ -130,11 +130,30 @@ export default function AIProviders() {
           </div>
         </div>
 
+        {/* Health check bar */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Activity className="w-3.5 h-3.5 text-primary" />
+            Provider health — pings each endpoint with a minimal prompt before you test.
+          </div>
+          <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={pingAll}>
+            <Radio className="w-3.5 h-3.5" />
+            Ping all
+          </Button>
+        </div>
+
         {/* Provider grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
           {PROVIDERS.map((p) => {
             const Icon = ICONS[p.id];
             const active = p.id === providerId;
+            const h = health[p.id];
+            const dot =
+              h.status === "ok" ? "bg-green-500" :
+              h.status === "degraded" ? "bg-amber-500" :
+              h.status === "error" ? "bg-red-500" :
+              h.status === "checking" ? "bg-blue-500 animate-pulse" :
+              "bg-muted-foreground/40";
             return (
               <Card
                 key={p.id}
@@ -143,33 +162,57 @@ export default function AIProviders() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <Icon className={`w-5 h-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
-                  {p.free && <Badge variant="secondary" className="text-[10px]">FREE TIER</Badge>}
+                  <div className="flex items-center gap-1.5">
+                    <span className={`inline-block w-2 h-2 rounded-full ${dot}`} title={`Health: ${h.status}`} />
+                    {p.free && <Badge variant="secondary" className="text-[10px]">FREE</Badge>}
+                  </div>
                 </div>
                 <h3 className="font-semibold text-sm">{p.label}</h3>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{p.description}</p>
+
+                <div className={`mt-2 text-[10px] ${STATUS_STYLE[h.status]}`}>
+                  {h.status === "idle" && "health: not checked"}
+                  {h.status === "checking" && "pinging…"}
+                  {h.status === "ok" && `ok · ${h.latencyMs}ms`}
+                  {h.status === "degraded" && `degraded · ${h.latencyMs}ms`}
+                  {h.status === "error" && `error · ${h.error?.slice(0, 60) ?? ""}`}
+                </div>
+
                 {p.requiresSecret && (
-                  <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5 text-[11px] text-amber-500">
+                  <div className="mt-2 pt-2 border-t border-border flex items-center gap-1.5 text-[11px] text-amber-500">
                     <KeyRound className="w-3 h-3" />
                     Needs {p.requiresSecret}
                   </div>
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-3 w-full h-7 text-[11px] gap-1.5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    runTest({
-                      provider: p.id,
-                      model: p.models[0].id,
-                      prompt: `Reply with exactly: "PONG from ${p.label} · ${p.models[0].id}".`,
-                    });
-                  }}
-                  disabled={running}
-                >
-                  {running && providerId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                  One-click test
-                </Button>
+                <div className="mt-3 grid grid-cols-2 gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-[11px] gap-1 border border-border"
+                    onClick={(e) => { e.stopPropagation(); pingProvider(p.id); }}
+                    disabled={h.status === "checking"}
+                  >
+                    {h.status === "checking" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Radio className="w-3 h-3" />}
+                    Ping
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      runTest({
+                        provider: p.id,
+                        model: p.models[0].id,
+                        prompt: `Reply with exactly: "PONG from ${p.label} · ${p.models[0].id}".`,
+                      });
+                    }}
+                    disabled={running}
+                  >
+                    {running && providerId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                    Test
+                  </Button>
+                </div>
               </Card>
             );
           })}
