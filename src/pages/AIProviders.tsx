@@ -136,10 +136,18 @@ export default function AIProviders() {
             <Activity className="w-3.5 h-3.5 text-primary" />
             Provider health — pings each endpoint with a minimal prompt before you test.
           </div>
-          <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={pingAll}>
-            <Radio className="w-3.5 h-3.5" />
-            Ping all
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/secrets-audit">
+              <Button size="sm" variant="ghost" className="gap-1.5 h-8 border border-border">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Secrets audit
+              </Button>
+            </Link>
+            <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={pingAll}>
+              <Radio className="w-3.5 h-3.5" />
+              Ping all
+            </Button>
+          </div>
         </div>
 
         {/* Provider grid */}
