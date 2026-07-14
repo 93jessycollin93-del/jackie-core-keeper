@@ -243,17 +243,23 @@ export default function AIProviders() {
               <Select value={modelId} onValueChange={setModelId}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {provider.models.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      <div className="flex items-center gap-2">
-                        {m.label}
-                        {m.free && <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-500">FREE</span>}
-                        {m.vision && <span className="text-[9px] px-1 rounded bg-blue-500/20 text-blue-500">VISION</span>}
-                        {m.reasoning && <span className="text-[9px] px-1 rounded bg-purple-500/20 text-purple-500">R1</span>}
-                        {m.note && <span className="text-[9px] text-muted-foreground">· {m.note}</span>}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {provider.models.map((m) => {
+                    const c = inferCapabilities(providerId, m);
+                    return (
+                      <SelectItem key={m.id} value={m.id}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {m.label}
+                          {m.free && <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-500">FREE</span>}
+                          {m.vision && <span className="text-[9px] px-1 rounded bg-blue-500/20 text-blue-500">VISION</span>}
+                          {m.reasoning && <span className="text-[9px] px-1 rounded bg-purple-500/20 text-purple-500">R1</span>}
+                          {c.tools && <span className="text-[9px] px-1 rounded bg-cyan-500/20 text-cyan-400">tools</span>}
+                          {c.json && <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400">json</span>}
+                          {c.context > 0 && <span className="text-[9px] px-1 rounded bg-indigo-500/20 text-indigo-300">{formatContext(c.context)}ctx</span>}
+                          {m.note && <span className="text-[9px] text-muted-foreground">· {m.note}</span>}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
