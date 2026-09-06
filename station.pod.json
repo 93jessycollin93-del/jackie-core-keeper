@@ -1,0 +1,63 @@
+{
+  "$schema": "https://raw.githubusercontent.com/93jessycollin93-del/jacky/main/superstation/spec/pod.manifest.schema.json",
+  "kernel": "1.0.0",
+  "pod": {
+    "id": "sas.pod.jackie-core-keeper",
+    "name": "Jackie Core Keeper",
+    "role": "bot",
+    "repo": "93jessycollin93-del/jackie-core-keeper",
+    "summary": "Identity and agent custody \u2014 core identity sigil, Agents, BotFoundry, ApiKeyManager, compress-pod."
+  },
+  "provides": [
+    {
+      "id": "sas.identity.core",
+      "version": "1.0.0",
+      "title": "Jackie core identity and sigil"
+    },
+    {
+      "id": "sas.bots.foundry",
+      "version": "1.0.0",
+      "title": "Bot generation \u2014 bot-generate, gunit-bot-gen"
+    },
+    {
+      "id": "sas.bots.roster",
+      "version": "1.0.0",
+      "title": "Agent roster"
+    },
+    {
+      "id": "sas.condense.pod",
+      "version": "1.0.0",
+      "title": "Pod compression \u2014 supabase/functions/compress-pod",
+      "degradesTo": "sas.condense.compress"
+    },
+    {
+      "id": "sas.vault.secret",
+      "version": "1.0.0",
+      "title": "API key custody \u2014 supabase/functions/api-keys",
+      "privileged": true
+    }
+  ],
+  "requires": [
+    {
+      "id": "sas.route.ask",
+      "range": "1.x"
+    },
+    {
+      "id": "sas.link.engine",
+      "range": "1.x",
+      "optional": true
+    }
+  ],
+  "surfaces": [
+    {
+      "kind": "edge-function",
+      "base": "/functions/v1",
+      "note": "Supabase edge functions"
+    },
+    {
+      "kind": "static",
+      "base": "/",
+      "note": "Vite/React + shadcn"
+    }
+  ]
+}
